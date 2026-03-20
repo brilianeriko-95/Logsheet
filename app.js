@@ -8,7 +8,7 @@
 // 1. CONFIGURATION & CONSTANTS
 // ============================================
 
-const APP_VERSION = '1.6.2';
+const APP_VERSION = '1.6.3';
 const APP_NAME = 'Turbine Log';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycby3cp1kW1LoS4xX0zbbLpxiR5W4lRk_cT0x2q1p1QpI/dev';
 
@@ -41,87 +41,185 @@ const AUTH_CONFIG = {
     CACHE_DURATION: 24 * 60 * 60 * 1000
 };
 
+// ============================================
+// 2. DATA STRUKTUR AREA
+// ============================================
+
+// Struktur Area Turbine Logsheet
 const AREAS = {
-    'STEAM TURBINE': [
-        'Load (MW)', 'Ekspor/Impor (MW)', 'PLN (MW)', 'UBB (MW)', 'PIE (MW)',
-        'TG-65 (MW)', 'TG-66 (MW)', 'GTG (MW)', 'SS-6500 (MW)',
-        'SS-2000 Active Power (MW)', 'SS-2000 Reactive Power (MVAR)',
-        'SS-2000 Current S (A)', 'SS-2000 Voltage (V)', 'SS-2000 HVS65 L02 (MW)',
-        'SS-2000 HVS65 L02 Current (A)', 'Total 3B (MW)'
+    "Steam Inlet Turbine": [
+        "MPS Inlet 30-TP-6101 PI-6114 (kg/cm2)", 
+        "MPS Inlet 30-TP-6101 TI-6153 (°C)", 
+        "MPS Inlet 30-TP-6101 PI-6116 (kg/cm2)", 
+        "LPS Extrac 30-TP-6101 PI-6123 (kg/cm2)", 
+        "Gland Steam TI-6156 (°C)", 
+        "MPS Inlet 30-TP-6101 PI-6108 (Kg/cm2)", 
+        "Exhaust Steam PI-6111 (kg/cm2)", 
+        "Gland Steam PI-6118 (Kg/cm2)"
     ],
-    'STEAM FLOW': [
-        'Produksi Steam SA (t/h)', 'STG Steam (t/h)', 'PA2 Steam (t/h)',
-        'Puri2 Steam (t/h)', 'Melter SA2 (t/h)', 'Ejector (t/h)',
-        'Gland Seal (t/h)', 'Deaerator (t/h)', 'Dump Condenser (t/h)',
-        'PCV-6105 (t/h)', 'Total Konsumsi Steam (t/h)', 'LPS Balance (t/h)'
+    "Low Pressure Steam": [
+        "LPS from U-6101 PI-6104 (kg/cm2)", 
+        "LPS from U-6101 TI-6102 (°C)", 
+        "LPS Header PI-6106 (Kg/cm2)", 
+        "LPS Header TI-6107 (°C)"
     ],
-    'STEAM PRESSURE': [
-        'Steam Extraction PI-6122 (kg/cm2)', 'Steam Extraction TI-6112 (C)',
-        'Temp. Cooling Air Inlet TI-6146 (C)', 'Temp. Cooling Air Inlet TI-6147 (C)',
-        'Temp. Lube Oil TI-6126 (C)', 'Axial Displacement (mm)',
-        'Vibrasi VI-6102 (Î¼m)', 'Temp. Journal Bearing TE-6134 (C)'
+    "Lube Oil": [
+        "Lube Oil 30-TK-6102 LI-6104 (%)", 
+        "Lube Oil 30-TK-6102 TI-6125 (°C)", 
+        "Lube Oil 30-C-6101 (On/Off)", 
+        "Lube Oil 30-EH-6102 (On/Off)", 
+        "Lube Oil Cartridge FI-6143 (%)", 
+        "Lube Oil Cartridge PI-6148 (mmH2O)", 
+        "Lube Oil Cartridge PI-6149 (mmH2O)", 
+        "Lube Oil PI-6145 (kg/cm2)", 
+        "Lube Oil E-6104 (A/B)", 
+        "Lube Oil TI-6127 (°C)", 
+        "Lube Oil FIL-6101 (A/B)", 
+        "Lube Oil PDI-6146 (Kg/cm2)", 
+        "Lube Oil PI-6143 (Kg/cm2)", 
+        "Lube Oil TI-6144 (°C)", 
+        "Lube Oil TI-6146 (°C)", 
+        "Lube Oil TI-6145 (°C)", 
+        "Lube Oil FG-6144 (%)", 
+        "Lube Oil FG-6146 (%)", 
+        "Lube Oil TI-6121 (°C)", 
+        "Lube Oil TI-6116 (°C)", 
+        "Lube Oil FG-6121 (%)", 
+        "Lube Oil FG-6116 (%)"
     ],
-    'COOLING TOWER SU': [
-        'CT SU Fan 1', 'CT SU Fan 2', 'CT SU Fan 3', 'CT SU Fan 4',
-        'CT SU Pompa 1', 'CT SU Pompa 2', 'CT SU Pompa 3', 'CT SU Pompa 4'
+    "Control Oil": [
+        "Control Oil 30-TK-6103 LI-6106 (%)", 
+        "Control Oil 30-TK-6103 TI-6128 (°C)", 
+        "Control Oil P-6106 (A/B)", 
+        "Control Oil FIL-6103 (A/B)", 
+        "Control Oil PI-6152 (Bar)"
     ],
-    'COOLING TOWER SA': [
-        'CT SA Fan 1', 'CT SA Fan 2', 'CT SA Fan 3', 'CT SA Fan 4',
-        'CT SA Pompa 1', 'CT SA Pompa 2', 'CT SA Pompa 3', 'CT SA Pompa 4'
+    "Shaft Line": [
+        "Jacking Oil 30-P-6105 PI-6158 (Bar)", 
+        "Jacking Oil 30-P-6105 PI-6161 (Bar)", 
+        "Electrical Turning Gear U-6103 (Remote/Running/Stop)", 
+        "EH-6101 (ON/OFF)"
+    ],
+    "Condenser 30-E-6102": [
+        "LG-6102 (%)", 
+        "30-P-6101 (A/B)", 
+        "30-P-6101 Suction (kg/cm2)", 
+        "30-P-6101 Discharge (kg/cm2)", 
+        "30-P-6101 Load (Ampere)"
+    ],
+    "Ejector": [
+        "J-6101 PI-6126 A (Kg/cm2)", 
+        "J-6101 PI-6127 B (Kg/cm2)", 
+        "J-6102 PI-6128 A (Kg/cm2)", 
+        "J-6102 PI-6129 B (Kg/cm2)", 
+        "J-6104 PI-6131 (Kg/cm2)", 
+        "J-6104 PI-6138 (Kg/cm2)", 
+        "PI-6172 (kg/cm2)", 
+        "LPS Extrac 30-TP-6101 TI-6155 (°C)", 
+        "from U-6102 TI-6104 (°C)"
+    ],
+    "Generator Cooling Water": [
+        "Air Cooler PI-6124 A (Kg/cm2)", 
+        "Air Cooler PI-6124 B (Kg/cm2)", 
+        "Air Cooler TI-6113 A (°C)", 
+        "Air Cooler TI-6113 B (°C)", 
+        "Air Cooler PI-6125 A (Kg/cm2)", 
+        "Air Cooler PI-6125 B (Kg/cm2)", 
+        "Air Cooler TI-6114 A (°C)", 
+        "Air Cooler TI-6114 B (°C)"
+    ],
+    "Condenser Cooling Water": [
+        "Condenser PI-6135 A (Kg/cm2)", 
+        "Condenser PI-6135 B (Kg/cm2)", 
+        "Condenser TI-6118 A (°C)", 
+        "Condenser TI-6118 B (°C)", 
+        "Condenser PI-6136 A (Kg/cm2)", 
+        "Condenser PI-6136 B (Kg/cm2)", 
+        "Condenser TI-6119 A (°C)", 
+        "Condenser TI-6119 B (°C)"
+    ],
+    "BFW System": [
+        "Condensate Tank TK-6201 (%)", 
+        "Condensate Tank TI-6216 (°C)", 
+        "P-6202 (A/B)", 
+        "P-6202 Suction (kg/cm2)", 
+        "P-6202 Discharge (kg/cm2)", 
+        "P-6202 Load (Ampere)", 
+        "Deaerator LI-6202 (%)", 
+        "Deaerator TI-6201 (°C)", 
+        "30-P-6201 (A/B)", 
+        "30-P-6201 Suction (kg/cm2)", 
+        "30-P-6201 Discharge (kg/cm2)", 
+        "30-P-6201 Load (Ampere)", 
+        "30-C-6202 A (ON/OFF)", 
+        "30-C-6202 A (Ampere)", 
+        "30-C-6202 B (ON/OFF)", 
+        "30-C-6202 B (Ampere)", 
+        "30-C-6202 PCV-6216 (%)", 
+        "30-C-6202 PI-6107 (kg/cm2)", 
+        "Condensate Drum 30-D-6201 LI-6209 (%)", 
+        "Condensate Drum 30-D-6201 PI-6218 (kg/cm2)", 
+        "Condensate Drum 30-D-6201 TI-6215 (°C)"
+    ],
+    "Chemical Dosing": [
+        "30-TK-6205 LI-6204 (%)", 
+        "30-TK-6205 30-P-6205 (A/B)", 
+        "30-TK-6205 Disch (kg/cm2)", 
+        "30-TK-6205 Stroke (%)", 
+        "30-TK-6206 LI-6206 (%)", 
+        "30-TK-6206 30-P-6206 (A/B)", 
+        "30-TK-6206 Disch (kg/cm2)", 
+        "30-TK-6206 Stroke (%)", 
+        "30-TK-6207 LI-6208 (%)", 
+        "30-TK-6207 30-P-6207 (A/B)", 
+        "30-TK-6207 Disch (kg/cm2)", 
+        "30-TK-6207 Stroke (%)"
     ]
 };
 
+// Struktur Area CT Logsheet
 const AREAS_CT = {
-    'CT UNIT 1': [
-        'Fan 1 Status (A/M)', 'Fan 1 Running/Stop',
-        'Fan 2 Status (A/M)', 'Fan 2 Running/Stop',
-        'Pompa 1 Status (A/M)', 'Pompa 1 Running/Stop',
-        'Pompa 2 Status (A/M)', 'Pompa 2 Running/Stop',
-        'Inlet Temperature (C)', 'Outlet Temperature (C)',
-        'Pressure (kg/cm2)', 'Flow Rate (m3/h)'
-    ],
-    'CT UNIT 2': [
-        'Fan 1 Status (A/M)', 'Fan 1 Running/Stop',
-        'Fan 2 Status (A/M)', 'Fan 2 Running/Stop',
-        'Pompa 1 Status (A/M)', 'Pompa 1 Running/Stop',
-        'Pompa 2 Status (A/M)', 'Pompa 2 Running/Stop',
-        'Inlet Temperature (C)', 'Outlet Temperature (C)',
-        'Pressure (kg/cm2)', 'Flow Rate (m3/h)'
-    ],
-    'CT UNIT 3': [
-        'Fan 1 Status (A/M)', 'Fan 1 Running/Stop',
-        'Fan 2 Status (A/M)', 'Fan 2 Running/Stop',
-        'Pompa 1 Status (A/M)', 'Pompa 1 Running/Stop',
-        'Pompa 2 Status (A/M)', 'Pompa 2 Running/Stop',
-        'Inlet Temperature (C)', 'Outlet Temperature (C)',
-        'Pressure (kg/cm2)', 'Flow Rate (m3/h)'
-    ],
-    'CT UNIT 4': [
-        'Fan 1 Status (A/M)', 'Fan 1 Running/Stop',
-        'Fan 2 Status (A/M)', 'Fan 2 Running/Stop',
-        'Pompa 1 Status (A/M)', 'Pompa 1 Running/Stop',
-        'Pompa 2 Status (A/M)', 'Pompa 2 Running/Stop',
-        'Inlet Temperature (C)', 'Outlet Temperature (C)',
-        'Pressure (kg/cm2)', 'Flow Rate (m3/h)'
+    "BASIN SA": [
+        "D-6511 LEVEL BASIN",
+        "D-6511 BLOWDOWN",
+        "D-6511 PH BASIN", 
+        "D-6511 TRASSAR (A/M)", 
+        "TK-6511 LEVEL ACID", 
+        "FIL-6511 (A/B)", 
+        "30-P-6511 A PRESS (kg/cm2)", 
+        "30-P-6511 B PRESS (kg/cm2)", 
+        "30-P-6511 C PRESS (kg/cm2)", 
+        "MT-6511 A STATUS", 
+        "MT-6511 B STATUS", 
+        "MT-6511 C STATUS", 
+        "MT-6511 D STATUS"
+    ], 
+    "BASIN SU": [
+        "D-6521 LEVEL BASIN",
+        "D-6521 BLOWDOWN",
+        "D-6521 PH BASIN", 
+        "D-6521 TRASSAR (A/M)", 
+        "TK-6521 LEVEL ACID", 
+        "FIL-6521 (A/B)", 
+        "30-P-6521 A PRESS (kg/cm2)", 
+        "30-P-6521 B PRESS (kg/cm2)", 
+        "30-P-6521 C PRESS (kg/cm2)", 
+        "MT-6521 A STATUS", 
+        "MT-6521 B STATUS", 
+        "MT-6521 C STATUS", 
+        "MT-6521 D STATUS"
     ]
 };
-
-const TPM_AREAS = [
-    'Steam Turbine Area',
-    'Generator Area',
-    'Lube Oil System',
-    'Control Room',
-    'Cooling Tower Area',
-    'Switchgear Area'
-];
 
 const INPUT_TYPES = {
-    'STATUS': {
-        patterns: ['Status (A/M)', 'Running/Stop', 'ON/OFF'],
+    PUMP_STATUS: {
+        patterns: ['(A/B)', '(ON/OFF)', '(On/Off)', '(Running/Stop)', '(Remote/Running/Stop)'],
         options: {
-            'Status (A/M)': ['Auto', 'Manual'],
-            'Running/Stop': ['Running', 'Stop', 'Standby'],
-            'ON/OFF': ['ON', 'OFF']
+            '(A/B)': ['A', 'B'],
+            '(ON/OFF)': ['ON', 'OFF'],
+            '(On/Off)': ['On', 'Off'],
+            '(Running/Stop)': ['Running', 'Stop'],
+            '(Remote/Running/Stop)': ['Remote', 'Running', 'Stop']
         }
     }
 };
