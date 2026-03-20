@@ -1,6 +1,6 @@
 /**
  * Turbine Log PWA - Main Application
- * Version: 1.6.1 (with Photo Feature from v1.7.1)
+ * Version: 1.6.3 (Fixed)
  * Description: Logsheet dengan fitur foto validasi parameter
  */
 
@@ -10,7 +10,7 @@
 
 const APP_VERSION = '1.6.3';
 const APP_NAME = 'Turbine Log';
-const GAS_URL = 'https://script.google.com/macros/s/AKfycby3cp1kW1LoS4xX0zbbLpxiR5W4lRk_cT0x2q1p1QpI/dev';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzFDztUKfkZr2wR-XnTMOHScU6kSfJqihCi7umKnhnSAy1bl3jN7lPDzJAEFFN2qFHXog/exec';
 
 const DRAFT_KEYS = {
     LOGSHEET: 'turbine_logsheet_draft',
@@ -44,6 +44,21 @@ const AUTH_CONFIG = {
 // ============================================
 // 2. DATA STRUKTUR AREA
 // ============================================
+
+// TPM Areas - FIXED: Added missing constant
+const TPM_AREAS = [
+    "Steam Inlet Turbine",
+    "Low Pressure Steam",
+    "Lube Oil",
+    "Control Oil",
+    "Shaft Line",
+    "Condenser 30-E-6102",
+    "Ejector",
+    "Generator Cooling Water",
+    "Condenser Cooling Water",
+    "BFW System",
+    "Chemical Dosing"
+];
 
 // Struktur Area Turbine Logsheet
 const AREAS = {
@@ -426,9 +441,17 @@ function goBackToHome() {
 function showCustomAlert(message, type = 'info') {
     const alertDiv = document.createElement('div');
     alertDiv.className = `custom-alert ${type}`;
+    
+    const icons = {
+        success: '✓',
+        error: '✗',
+        warning: '⚠',
+        info: 'ℹ'
+    };
+    
     alertDiv.innerHTML = `
         <div class="alert-content">
-            <span class="alert-icon">${type === 'success' ? 'âœ“' : type === 'error' ? 'âœ—' : type === 'warning' ? 'âš ' : 'â„¹'}</span>
+            <span class="alert-icon">${icons[type] || icons.info}</span>
             <span class="alert-message">${message}</span>
         </div>
     `;
@@ -464,8 +487,11 @@ function hideLoginError() {
 // ============================================
 
 async function loginOperator() {
-    const username = document.getElementById('operatorUsername')?.value.trim().toLowerCase();
-    const password = document.getElementById('operatorPassword')?.value;
+    const usernameInput = document.getElementById('operatorUsername');
+    const passwordInput = document.getElementById('operatorPassword');
+    
+    const username = usernameInput?.value?.trim().toLowerCase();
+    const password = passwordInput?.value;
     
     if (!username || !password) {
         showLoginError('Username dan password wajib diisi');
@@ -474,7 +500,7 @@ async function loginOperator() {
     
     const loginBtn = document.getElementById('loginBtn');
     if (loginBtn) {
-        loginBtn.textContent = 'â³ Memverifikasi...';
+        loginBtn.textContent = '⏳ Memverifikasi...';
         loginBtn.disabled = true;
     }
     
@@ -677,7 +703,7 @@ async function fetchUsersFromServer() {
         };
         
         const script = document.createElement('script');
-        script.src = `${GAS_URL}?action=getUsers&adminUser=${encodeURIComponent(currentUser.username)}&adminPass=admin123&callback=${callbackName}`;
+        script.src = `${GAS_URL}?action=getUsers&adminUser=${encodeURIComponent(currentUser?.username || '')}&callback=${callbackName}`;
         
         script.onerror = () => {
             clearTimeout(timeout);
@@ -698,7 +724,7 @@ function renderUserList(users) {
     if (validUsers.length === 0) {
         container.innerHTML = `
             <div style="text-align: center; padding: 40px; color: #ef4444;">
-                âŒ Tidak ada data user valid<br>
+                ❌ Tidak ada data user valid<br>
                 <small style="color: #64748b;">Pastikan sheet USERS memiliki kolom yang benar</small>
             </div>
         `;
@@ -721,7 +747,7 @@ function renderUserList(users) {
                             ${isCurrentUser ? '<span style="font-size: 0.7rem; background: rgba(14, 165, 233, 0.2); color: #38bdf8; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">Anda</span>' : ''}
                         </div>
                         <div style="font-size: 0.875rem; color: #94a3b8; margin-top: 2px;">
-                            @${user.username} â€¢ ${user.department || 'Unit Utilitas 3B'}
+                            @${user.username} • ${user.department || 'Unit Utilitas 3B'}
                         </div>
                     </div>
                     <div style="display: flex; gap: 4px;">
@@ -735,17 +761,17 @@ function renderUserList(users) {
                 </div>
                 
                 <div style="background: rgba(239, 68, 68, 0.05); border: 1px dashed rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                    <div style="font-size: 0.75rem; color: #ef4444; margin-bottom: 4px; font-weight: 600;">ðŸ”“ Password:</div>
+                    <div style="font-size: 0.75rem; color: #ef4444; margin-bottom: 4px; font-weight: 600;">🔓 Password:</div>
                     <div style="font-family: monospace; font-size: 0.875rem; color: #f87171; letter-spacing: 1px;">${user.password || 'N/A'}</div>
                 </div>
                 
                 <div style="display: flex; gap: 8px;">
                     ${!isCurrentUser ? `
                         <button onclick="toggleUserStatus('${user.username}')" style="flex: 1; padding: 10px; background: ${isActive ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)'}; color: ${isActive ? '#ef4444' : '#10b981'}; border: 1px solid ${isActive ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}; border-radius: 8px; font-size: 0.875rem; cursor: pointer;">
-                            ${isActive ? 'ðŸ”’ Nonaktifkan' : 'ðŸ”“ Aktifkan'}
+                            ${isActive ? '🔒 Nonaktifkan' : '🔓 Aktifkan'}
                         </button>
                         <button onclick="deleteUser('${user.username}')" style="padding: 10px 16px; background: rgba(100, 116, 139, 0.1); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.3); border-radius: 8px; font-size: 0.875rem; cursor: pointer;">
-                            ðŸ—‘ï¸
+                            🗑️
                         </button>
                     ` : '<div style="flex: 1; text-align: center; color: #64748b; font-size: 0.875rem; padding: 10px;">Tidak dapat mengedit diri sendiri</div>'}
                 </div>
@@ -791,7 +817,7 @@ function showAddUserForm() {
     modal.innerHTML = `
         <div style="max-width: 480px; margin: 0 auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 16px; background: rgba(30, 41, 59, 0.8); border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.2);">
-                <h2 style="margin: 0; font-size: 1.25rem;">âž• Tambah User Baru</h2>
+                <h2 style="margin: 0; font-size: 1.25rem;">➕ Tambah User Baru</h2>
                 <button onclick="restoreUserManagement()" style="background: none; border: none; color: #94a3b8; cursor: pointer; padding: 8px;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -809,7 +835,7 @@ function showAddUserForm() {
                 <div>
                     <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 6px;">Password (Plaintext) *</label>
                     <input type="text" id="newPassword" required style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 8px; color: white; font-size: 1rem;">
-                    <small style="color: #64748b; font-size: 0.75rem;">âš ï¸ Password akan disimpan dalam bentuk plaintext</small>
+                    <small style="color: #64748b; font-size: 0.75rem;">⚠️ Password akan disimpan dalam bentuk plaintext</small>
                 </div>
                 
                 <div>
@@ -855,11 +881,11 @@ async function handleAddUser(e) {
     e.preventDefault();
     
     const formData = {
-        username: document.getElementById('newUsername').value.trim().toLowerCase(),
-        password: document.getElementById('newPassword').value,
-        name: document.getElementById('newName').value.trim(),
-        role: document.getElementById('newRole').value,
-        department: document.getElementById('newDepartment').value.trim()
+        username: document.getElementById('newUsername')?.value?.trim().toLowerCase(),
+        password: document.getElementById('newPassword')?.value,
+        name: document.getElementById('newName')?.value?.trim(),
+        role: document.getElementById('newRole')?.value,
+        department: document.getElementById('newDepartment')?.value?.trim()
     };
     
     if (!formData.username || !formData.password || !formData.name) {
@@ -902,8 +928,7 @@ function addUserToServer(userData) {
         const payload = {
             type: 'USER_MANAGEMENT',
             action: 'add',
-            adminUser: currentUser.username,
-            adminPass: 'admin123',
+            adminUser: currentUser?.username,
             userData: userData
         };
         
@@ -925,8 +950,7 @@ async function toggleUserStatus(username) {
         const payload = {
             type: 'USER_MANAGEMENT',
             action: 'toggle',
-            adminUser: currentUser.username,
-            adminPass: 'admin123',
+            adminUser: currentUser?.username,
             targetUsername: username
         };
         
@@ -954,7 +978,7 @@ async function toggleUserStatus(username) {
 async function deleteUser(username) {
     if (!confirm(`Yakin ingin menghapus user @${username}?`)) return;
     
-    if (username.toLowerCase() === currentUser.username.toLowerCase()) {
+    if (username.toLowerCase() === currentUser?.username?.toLowerCase()) {
         showCustomAlert('Tidak bisa menghapus diri sendiri!', 'error');
         return;
     }
@@ -963,8 +987,7 @@ async function deleteUser(username) {
         const payload = {
             type: 'USER_MANAGEMENT',
             action: 'delete',
-            adminUser: currentUser.username,
-            adminPass: 'admin123',
+            adminUser: currentUser?.username,
             targetUsername: username
         };
         
@@ -1032,7 +1055,7 @@ async function syncUsersForOffline() {
             };
             
             const script = document.createElement('script');
-            script.src = `${GAS_URL}?action=getUsers&adminUser=${encodeURIComponent(currentUser.username)}&adminPass=admin123&callback=${callbackName}`;
+            script.src = `${GAS_URL}?action=getUsers&adminUser=${encodeURIComponent(currentUser?.username || '')}&callback=${callbackName}`;
             
             script.onerror = () => {
                 cleanup();
@@ -1137,10 +1160,10 @@ function toggleCPVisibility(inputId, btn) {
     if (!input || !btn) return;
     if (input.type === 'password') {
         input.type = 'text';
-        btn.textContent = 'ðŸ™ˆ';
+        btn.textContent = '🙈';
     } else {
         input.type = 'password';
-        btn.textContent = 'ðŸ‘ï¸';
+        btn.textContent = '👁️';
     }
 }
 
@@ -1185,7 +1208,7 @@ async function handleChangePasswordSubmit(e) {
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const originalText = submitBtn ? submitBtn.textContent : 'Simpan';
     if(submitBtn) {
-        submitBtn.textContent = 'â³ Menyimpan...';
+        submitBtn.textContent = '⏳ Menyimpan...';
         submitBtn.disabled = true;
     }
     
@@ -1199,7 +1222,7 @@ async function handleChangePasswordSubmit(e) {
         if (result.success) {
             updatePasswordInCache(currentUser.username, newPassword);
             
-            showCustomAlert('âœ“ Password berhasil diubah! Silakan login ulang.', 'success');
+            showCustomAlert('✓ Password berhasil diubah! Silakan login ulang.', 'success');
             closeChangePasswordModal();
             
             setTimeout(() => {
@@ -1328,7 +1351,7 @@ function setUploadStep(stepNum) {
                 step.classList.remove('active');
                 step.classList.add('completed');
                 const icon = step.querySelector('.step-icon');
-                if (icon) icon.innerHTML = 'âœ“';
+                if (icon) icon.innerHTML = '✓';
             } else if (i === stepNum) {
                 step.classList.add('active');
                 step.classList.remove('completed');
@@ -1352,7 +1375,7 @@ function completeUploadProgress() {
     
     overlay?.classList.add('success');
     if(turbine) turbine.classList.remove('spinning');
-    if(statusText) statusText.textContent = 'âœ“ Berhasil!';
+    if(statusText) statusText.textContent = '✓ Berhasil!';
     
     setTimeout(() => hideUploadProgress(), 800);
 }
@@ -1367,7 +1390,7 @@ function errorUploadProgress() {
     
     overlay?.classList.add('error');
     if(turbine) turbine.classList.remove('spinning');
-    if(statusText) statusText.textContent = 'âœ— Gagal Mengirim';
+    if(statusText) statusText.textContent = '✗ Gagal Mengirim';
     if(percentage) percentage.textContent = 'Error';
     
     setTimeout(() => hideUploadProgress(), 1500);
@@ -1445,7 +1468,9 @@ function updateParamPhotoPreview() {
 }
 
 function loadParamPhotoForCurrentStep() {
-    const fullLabel = AREAS[activeArea][activeIdx];
+    const fullLabel = AREAS[activeArea]?.[activeIdx];
+    if (!fullLabel) return;
+    
     const photoKey = `${activeArea}_${fullLabel}`;
     
     if (paramPhotos && paramPhotos[photoKey]) {
@@ -1459,7 +1484,9 @@ function loadParamPhotoForCurrentStep() {
 function saveParamPhotosToDraft() {
     if (!activeArea || activeIdx === undefined) return;
     
-    const fullLabel = AREAS[activeArea][activeIdx];
+    const fullLabel = AREAS[activeArea]?.[activeIdx];
+    if (!fullLabel) return;
+    
     const photoKey = `${activeArea}_${fullLabel}`;
     
     if (currentParamPhoto) {
@@ -1545,7 +1572,9 @@ function updateCTParamPhotoPreview() {
 }
 
 function loadCTParamPhotoForCurrentStep() {
-    const fullLabel = AREAS_CT[activeAreaCT][activeIdxCT];
+    const fullLabel = AREAS_CT[activeAreaCT]?.[activeIdxCT];
+    if (!fullLabel) return;
+    
     const photoKey = `${activeAreaCT}_${fullLabel}`;
     
     if (ctParamPhotos && ctParamPhotos[photoKey]) {
@@ -1559,7 +1588,9 @@ function loadCTParamPhotoForCurrentStep() {
 function saveCTParamPhotosToDraft() {
     if (!activeAreaCT || activeIdxCT === undefined) return;
     
-    const fullLabel = AREAS_CT[activeAreaCT][activeIdxCT];
+    const fullLabel = AREAS_CT[activeAreaCT]?.[activeIdxCT];
+    if (!fullLabel) return;
+    
     const photoKey = `${activeAreaCT}_${fullLabel}`;
     
     if (currentCTParamPhoto) {
@@ -1652,7 +1683,7 @@ function renderMenu() {
                 <div class="area-progress-ring">
                     <svg width="40" height="40" viewBox="0 0 40 40">
                         <circle cx="20" cy="20" r="18" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
-                        <circle cx="20" cy="20" r="18" fill="none" stroke="${isCompleted ? '#10b981' : 'var(--primary')}" 
+                        <circle cx="20" cy="20" r="18" fill="none" stroke="${isCompleted ? '#10b981' : 'var(--primary)'}" 
                                 stroke-width="3" stroke-linecap="round" stroke-dasharray="${circumference}" 
                                 stroke-dashoffset="${strokeDashoffset}" transform="rotate(-90 20 20)"/>
                         <text x="20" y="24" text-anchor="middle" font-size="10" font-weight="bold" fill="${isCompleted ? '#10b981' : 'var(--text-primary)'}">${filled}</text>
@@ -1661,12 +1692,12 @@ function renderMenu() {
                 <div class="area-info">
                     <div class="area-name">${areaName}</div>
                     <div class="area-meta ${hasAbnormal ? 'warning' : ''}">
-                        ${hasAbnormal ? 'âš ï¸ Ada parameter bermasalah â€¢ ' : ''}${filled} dari ${total} parameter
+                        ${hasAbnormal ? '⚠️ Ada parameter bermasalah • ' : ''}${filled} dari ${total} parameter
                     </div>
                 </div>
                 <div class="area-status">
                     ${hasAbnormal ? '<span style="color: #ef4444; margin-right: 4px;">!</span>' : ''}
-                    ${isCompleted ? 'âœ“' : 'â¯'}
+                    ${isCompleted ? '✓' : '›'}
                 </div>
             </div>
         `;
@@ -1716,7 +1747,8 @@ function openArea(areaName) {
 
 function renderProgressDots() {
     const container = document.getElementById('progressDots');
-    if (!container) return;
+    if (!container || !activeArea || !AREAS[activeArea]) return;
+    
     const total = AREAS[activeArea].length;
     let html = '';
     
@@ -1748,6 +1780,8 @@ function jumpToStep(index) {
 }
 
 function detectInputType(label) {
+    if (!label) return { type: 'text', options: null, pattern: null };
+    
     for (const [type, config] of Object.entries(INPUT_TYPES)) {
         for (const pattern of config.patterns) {
             if (label.includes(pattern)) {
@@ -1763,16 +1797,22 @@ function detectInputType(label) {
 }
 
 function getUnit(label) {
+    if (!label) return '';
     const match = label.match(/\(([^)]+)\)/);
     return match ? match[1] : "";
 }
 
 function getParamName(label) {
+    if (!label) return '';
     return label.split(' (')[0];
 }
 
 function showStep() {
+    if (!activeArea || !AREAS[activeArea]) return;
+    
     const fullLabel = AREAS[activeArea][activeIdx];
+    if (!fullLabel) return;
+    
     const total = AREAS[activeArea].length;
     const inputType = detectInputType(fullLabel);
     currentInputType = inputType.type;
@@ -1872,6 +1912,8 @@ function showStep() {
 }
 
 function handleStatusChange(checkbox) {
+    if (!checkbox) return;
+    
     const chip = checkbox.closest('.status-chip');
     const noteContainer = document.getElementById('statusNoteContainer');
     const valInput = document.getElementById('valInput');
@@ -1879,12 +1921,13 @@ function handleStatusChange(checkbox) {
     document.querySelectorAll('input[name="paramStatus"]').forEach(cb => {
         if (cb !== checkbox) {
             cb.checked = false;
-            cb.closest('.status-chip').classList.remove('active');
+            const cbChip = cb.closest('.status-chip');
+            if (cbChip) cbChip.classList.remove('active');
         }
     });
     
     if (checkbox.checked) {
-        chip.classList.add('active');
+        if (chip) chip.classList.add('active');
         if (noteContainer) noteContainer.style.display = 'block';
         
         setTimeout(() => {
@@ -1900,7 +1943,7 @@ function handleStatusChange(checkbox) {
             }
         }
     } else {
-        chip.classList.remove('active');
+        if (chip) chip.classList.remove('active');
         if (noteContainer) noteContainer.style.display = 'none';
         const noteInput = document.getElementById('statusNote');
         if (noteInput) noteInput.value = '';
@@ -1918,7 +1961,11 @@ function handleStatusChange(checkbox) {
 }
 
 function saveCurrentStatusToDraft() {
+    if (!activeArea || !AREAS[activeArea]) return;
+    
     const fullLabel = AREAS[activeArea][activeIdx];
+    if (!fullLabel) return;
+    
     const input = document.getElementById('valInput');
     const checkedStatus = document.querySelector('input[name="paramStatus"]:checked');
     const note = document.getElementById('statusNote')?.value || '';
@@ -1951,7 +1998,8 @@ function saveCurrentStatusToDraft() {
 function loadAbnormalStatus(fullLabel) {
     document.querySelectorAll('input[name="paramStatus"]').forEach(cb => {
         cb.checked = false;
-        cb.closest('.status-chip').classList.remove('active');
+        const chip = cb.closest('.status-chip');
+        if (chip) chip.classList.remove('active');
     });
     
     const noteContainer = document.getElementById('statusNoteContainer');
@@ -1980,7 +2028,8 @@ function loadAbnormalStatus(fullLabel) {
             const checkbox = document.querySelector(`input[value="${firstLine}"]`);
             if (checkbox) {
                 checkbox.checked = true;
-                checkbox.closest('.status-chip').classList.add('active');
+                const chip = checkbox.closest('.status-chip');
+                if (chip) chip.classList.add('active');
                 if (noteContainer) noteContainer.style.display = 'block';
                 if (noteInput) noteInput.value = secondLine;
                 
@@ -1998,8 +2047,11 @@ function loadAbnormalStatus(fullLabel) {
 }
 
 function saveCurrentStep() {
+    if (!activeArea || !AREAS[activeArea]) return;
+    
     const input = document.getElementById('valInput');
     const fullLabel = AREAS[activeArea][activeIdx];
+    if (!fullLabel) return;
     
     if (!currentInput[activeArea]) currentInput[activeArea] = {};
     
@@ -2039,7 +2091,7 @@ function saveCurrentStep() {
 function saveStep() {
     saveCurrentStep();
     
-    if (activeIdx < AREAS[activeArea].length - 1) {
+    if (activeIdx < (AREAS[activeArea]?.length || 0) - 1) {
         activeIdx++;
         showStep();
     } else {
@@ -2093,7 +2145,7 @@ async function sendToSheet() {
         });
         
         progress.complete();
-        showCustomAlert('âœ“ Data berhasil dikirim ke sistem!', 'success');
+        showCustomAlert('✓ Data berhasil dikirim ke sistem!', 'success');
         
         currentInput = {};
         paramPhotos = {}; // Clear photos - NEW from v1.7.1
@@ -2132,7 +2184,7 @@ function renderTPMAreas() {
                 <div class="area-info">
                     <div class="area-name">${area}</div>
                 </div>
-                <div class="area-status">â¯</div>
+                <div class="area-status">›</div>
             </div>
         `;
     });
@@ -2245,7 +2297,7 @@ function selectTPMStatus(status) {
     
     if ((status === 'abnormal' || status === 'off') && !currentTPMPhoto) {
         setTimeout(() => {
-            showCustomAlert('âš ï¸ Kondisi abnormal/off wajib didokumentasikan dengan foto!', 'warning');
+            showCustomAlert('⚠️ Kondisi abnormal/off wajib didokumentasikan dengan foto!', 'warning');
         }, 100);
     }
 }
@@ -2302,7 +2354,7 @@ async function submitTPMData() {
         tpmHistory.push({...tpmData, photo: '[UPLOADED]'});
         localStorage.setItem(DRAFT_KEYS.TPM_HISTORY, JSON.stringify(tpmHistory));
         
-        showCustomAlert(`âœ“ Data TPM ${activeTPMArea} berhasil disimpan!`, 'success');
+        showCustomAlert(`✓ Data TPM ${activeTPMArea} berhasil disimpan!`, 'success');
         currentTPMPhoto = null;
         currentTPMStatus = '';
         
@@ -2367,7 +2419,7 @@ function detectShift() {
     const kegiatanNum = document.getElementById('kegiatanShiftNum');
     
     if (badge) badge.textContent = `SHIFT ${shift}`;
-    if (info) info.textContent = `${shiftText} â€¢ Auto Save Aktif`;
+    if (info) info.textContent = `${shiftText} • Auto Save Aktif`;
     if (kegiatanNum) kegiatanNum.textContent = shift;
     
     if (badge) {
@@ -2580,7 +2632,7 @@ async function loadLastBalancingData(fromSpreadsheet = true) {
             'ti6146': lastData['TI6146_C'],
             'ti6126': lastData['TI6126_C'],
             'axialDisplacement': lastData['Axial_Displacement_mm'],
-            'vi6102': lastData['VI6102_Î¼m'],
+            'vi6102': lastData['VI6102_μm'],
             'te6134': lastData['TE6134_C'],
             'ctSuFan': lastData['CT_SU_Fan'],
             'ctSuPompa': lastData['CT_SU_Pompa'],
@@ -2605,8 +2657,8 @@ async function loadLastBalancingData(fromSpreadsheet = true) {
         saveBalancingDraft();
         
         const msg = source === 'spreadsheet' 
-            ? `âœ“ Data terakhir dari server dimuat.`
-            : `âœ“ Data terakhir dari penyimpanan lokal dimuat.`;
+            ? `✓ Data terakhir dari server dimuat.`
+            : `✓ Data terakhir dari penyimpanan lokal dimuat.`;
         
         showCustomAlert(msg, 'success');
         
@@ -2651,7 +2703,7 @@ function resetBalancingForm() {
         eksporLabel.style.color = '#94a3b8';
     }
     if (eksporHint) {
-        eksporHint.innerHTML = 'ðŸ’¡ <strong>Minus (-) = Ekspor</strong> | <strong>Plus (+) = Impor</strong>';
+        eksporHint.innerHTML = '💡 <strong>Minus (-) = Ekspor</strong> | <strong>Plus (+) = Impor</strong>';
         eksporHint.style.color = '#94a3b8';
     }
     
@@ -2660,6 +2712,8 @@ function resetBalancingForm() {
 }
 
 function handleEksporInput(input) {
+    if (!input) return;
+    
     const label = document.getElementById('eksporLabel');
     const hint = document.getElementById('eksporHint');
     let value = parseFloat(input.value);
@@ -2670,7 +2724,7 @@ function handleEksporInput(input) {
             label.style.color = '#94a3b8';
         }
         if (hint) {
-            hint.innerHTML = 'ðŸ’¡ <strong>Minus (-) = Ekspor</strong> | <strong>Plus (+) = Impor</strong>';
+            hint.innerHTML = '💡 <strong>Minus (-) = Ekspor</strong> | <strong>Plus (+) = Impor</strong>';
             hint.style.color = '#94a3b8';
         }
         input.style.borderColor = 'rgba(148, 163, 184, 0.2)';
@@ -2685,7 +2739,7 @@ function handleEksporInput(input) {
             label.style.color = '#10b981';
         }
         if (hint) {
-            hint.innerHTML = 'âœ“ Posisi: <strong>Ekspor ke Grid</strong> (Nilai negatif)';
+            hint.innerHTML = '✓ Posisi: <strong>Ekspor ke Grid</strong> (Nilai negatif)';
             hint.style.color = '#10b981';
         }
         input.style.borderColor = '#10b981';
@@ -2698,7 +2752,7 @@ function handleEksporInput(input) {
             label.style.color = '#f59e0b';
         }
         if (hint) {
-            hint.innerHTML = 'âœ“ Posisi: <strong>Impor dari Grid</strong> (Nilai positif)';
+            hint.innerHTML = '✓ Posisi: <strong>Impor dari Grid</strong> (Nilai positif)';
             hint.style.color = '#f59e0b';
         }
         input.style.borderColor = '#f59e0b';
@@ -2711,7 +2765,7 @@ function handleEksporInput(input) {
             label.style.color = '#94a3b8';
         }
         if (hint) {
-            hint.innerHTML = 'âšª Posisi: <strong>Netral</strong> (Nilai 0)';
+            hint.innerHTML = '⚪ Posisi: <strong>Netral</strong> (Nilai 0)';
             hint.style.color = '#64748b';
         }
         input.style.borderColor = 'rgba(148, 163, 184, 0.2)';
@@ -2818,53 +2872,53 @@ function formatWhatsAppMessage(data) {
     message += `Jam ${data.Jam}\n\n`;
     
     message += `*Output Power STG 17,5*\n`;
-    message += `â ‚ Load = ${formatNum(data.Load_MW)} MW\n`;
-    message += `â ‚ ${data.Ekspor_Impor_Status} = ${formatNum(Math.abs(data.Ekspor_Impor_MW), 3)} MW\n\n`;
+    message += `▸ Load = ${formatNum(data.Load_MW)} MW\n`;
+    message += `▸ ${data.Ekspor_Impor_Status} = ${formatNum(Math.abs(data.Ekspor_Impor_MW), 3)} MW\n\n`;
     
     message += `*Balance Power SCADA*\n`;
-    message += `â ‚ PLN = ${formatNum(data.PLN_MW)}MW\n`;
-    message += `â ‚ UBB = ${formatNum(data.UBB_MW)}MW\n`;
-    message += `â ‚ PIE = ${formatNum(data.PIE_MW)} MW\n`;
-    message += `â ‚ TG-65 = ${formatNum(data.TG65_MW)} MW\n`;
-    message += `â ‚ TG-66 = ${formatNum(data.TG66_MW)} MW\n`;
-    message += `â ‚ GTG = ${formatNum(data.GTG_MW)} MW\n\n`;
+    message += `▸ PLN = ${formatNum(data.PLN_MW)}MW\n`;
+    message += `▸ UBB = ${formatNum(data.UBB_MW)}MW\n`;
+    message += `▸ PIE = ${formatNum(data.PIE_MW)} MW\n`;
+    message += `▸ TG-65 = ${formatNum(data.TG65_MW)} MW\n`;
+    message += `▸ TG-66 = ${formatNum(data.TG66_MW)} MW\n`;
+    message += `▸ GTG = ${formatNum(data.GTG_MW)} MW\n\n`;
     
     message += `*Konsumsi Power 3B*\n`;
-    message += `â— SS-6500 (TR-Main 01) = ${formatNum(data.SS6500_MW, 3)} MW\n`;
-    message += `â— SS-2000 *Via ${data.SS2000_Via}*\n`;
-    message += `  â ‚ Active power = ${formatNum(data.Active_Power_MW, 3)} MW\n`;
-    message += `  â ‚ Reactive power = ${formatNum(data.Reactive_Power_MVAR, 3)} MVAR\n`;
-    message += `  â ‚ Current S = ${formatNum(data.Current_S_A, 1)} A\n`;
-    message += `  â ‚ Voltage = ${formatInt(data.Voltage_V)} V\n`;
-    message += `  â ‚ (HVS65 L02) = ${formatNum(data.HVS65_L02_MW, 3)} MW (${formatInt(data.HVS65_L02_Current_A)} A)\n`;
-    message += `â— Total 3B = ${formatNum(data.Total_3B_MW, 3)}MW\n\n`;
+    message += `● SS-6500 (TR-Main 01) = ${formatNum(data.SS6500_MW, 3)} MW\n`;
+    message += `● SS-2000 *Via ${data.SS2000_Via}*\n`;
+    message += `  ▸ Active power = ${formatNum(data.Active_Power_MW, 3)} MW\n`;
+    message += `  ▸ Reactive power = ${formatNum(data.Reactive_Power_MVAR, 3)} MVAR\n`;
+    message += `  ▸ Current S = ${formatNum(data.Current_S_A, 1)} A\n`;
+    message += `  ▸ Voltage = ${formatInt(data.Voltage_V)} V\n`;
+    message += `  ▸ (HVS65 L02) = ${formatNum(data.HVS65_L02_MW, 3)} MW (${formatInt(data.HVS65_L02_Current_A)} A)\n`;
+    message += `● Total 3B = ${formatNum(data.Total_3B_MW, 3)}MW\n\n`;
     
     message += `*Produksi Steam SA*\n`;
-    message += `â ‚ FQ-1105 = ${formatNum(data['Produksi_Steam_SA_t/h'], 1)} t/h\n\n`;
+    message += `▸ FQ-1105 = ${formatNum(data['Produksi_Steam_SA_t/h'], 1)} t/h\n\n`;
     
     message += `*Konsumsi Steam 3B*\n`;
-    message += `â ‚ STG 17,5 = ${formatNum(data['STG_Steam_t/h'], 1)} t/h\n`;
-    message += `â ‚ PA2 = ${formatNum(data['PA2_Steam_t/h'], 1)} t/h\n`;
-    message += `â ‚ Puri2 = ${formatNum(data['Puri2_Steam_t/h'], 1)} t/h\n`;
-    message += `â ‚ Melter SA2 = ${formatNum(data['Melter_SA2_t/h'], 1)} t/h\n`;
-    message += `â ‚ Ejector = ${formatNum(data['Ejector_t/h'], 1)} t/h\n`;
-    message += `â ‚ Gland Seal = ${formatNum(data['Gland_Seal_t/h'], 1)} t/h\n`;
-    message += `â ‚ Deaerator = ${formatNum(data['Deaerator_t/h'], 1)} t/h\n`;
-    message += `â ‚ Dump Condenser = ${formatNum(data['Dump_Condenser_t/h'], 1)} t/h\n`;
-    message += `â ‚ PCV-6105 = ${formatNum(data['PCV6105_t/h'], 1)} t/h\n`;
-    message += `*â ‚ Total Konsumsi* = ${formatNum(data['Total_Konsumsi_Steam_t/h'], 1)} t/h\n\n`;
+    message += `▸ STG 17,5 = ${formatNum(data['STG_Steam_t/h'], 1)} t/h\n`;
+    message += `▸ PA2 = ${formatNum(data['PA2_Steam_t/h'], 1)} t/h\n`;
+    message += `▸ Puri2 = ${formatNum(data['Puri2_Steam_t/h'], 1)} t/h\n`;
+    message += `▸ Melter SA2 = ${formatNum(data['Melter_SA2_t/h'], 1)} t/h\n`;
+    message += `▸ Ejector = ${formatNum(data['Ejector_t/h'], 1)} t/h\n`;
+    message += `▸ Gland Seal = ${formatNum(data['Gland_Seal_t/h'], 1)} t/h\n`;
+    message += `▸ Deaerator = ${formatNum(data['Deaerator_t/h'], 1)} t/h\n`;
+    message += `▸ Dump Condenser = ${formatNum(data['Dump_Condenser_t/h'], 1)} t/h\n`;
+    message += `▸ PCV-6105 = ${formatNum(data['PCV6105_t/h'], 1)} t/h\n`;
+    message += `*▸ Total Konsumsi* = ${formatNum(data['Total_Konsumsi_Steam_t/h'], 1)} t/h\n\n`;
     
     message += `*${data.LPS_Balance_Status}* = ${formatNum(data['LPS_Balance_t/h'], 1)} t/h\n\n`;
     
     message += `*Monitoring*\n`;
-    message += `â ‚ Steam Extraction PI-6122 = ${formatNum(data['PI6122_kg/cm2'], 2)} kg/cmÂ² & TI-6112 = ${formatNum(data['TI6112_C'], 1)} Â°C\n`;
-    message += `â ‚ Temp. Cooling Air Inlet (TI-6146/47) = ${formatNum(data['TI6146_C'], 2)} Â°C\n`;
-    message += `â ‚ Temp. Lube Oil (TI-6126) = ${formatNum(data['TI6126_C'], 2)} Â°C\n`;
-    message += `â ‚ Axial Displacement = ${formatNum(data['Axial_Displacement_mm'], 2)} mm (High : 0,6 mm)\n`;
-    message += `â ‚ Vibrasi VI-6102 = ${formatNum(data['VI6102_Î¼m'], 2)} Î¼m (High : 85 Î¼m)\n`;
-    message += `â ‚ Temp. Journal Bearing TE-6134 = ${formatNum(data['TE6134_C'], 1)} Â°C (High : 115 Â°C)\n`;
-    message += `â ‚ CT SU = Fan : ${formatInt(data['CT_SU_Fan'])} & Pompa : ${formatInt(data['CT_SU_Pompa'])}\n`;
-    message += `â ‚ CT SA = Fan : ${formatInt(data['CT_SA_Fan'])} & Pompa : ${formatInt(data['CT_SA_Pompa'])}\n\n`;
+    message += `▸ Steam Extraction PI-6122 = ${formatNum(data['PI6122_kg/cm2'], 2)} kg/cm² & TI-6112 = ${formatNum(data['TI6112_C'], 1)} °C\n`;
+    message += `▸ Temp. Cooling Air Inlet (TI-6146/47) = ${formatNum(data['TI6146_C'], 2)} °C\n`;
+    message += `▸ Temp. Lube Oil (TI-6126) = ${formatNum(data['TI6126_C'], 2)} °C\n`;
+    message += `▸ Axial Displacement = ${formatNum(data['Axial_Displacement_mm'], 2)} mm (High : 0,6 mm)\n`;
+    message += `▸ Vibrasi VI-6102 = ${formatNum(data['VI6102_μm'], 2)} μm (High : 85 μm)\n`;
+    message += `▸ Temp. Journal Bearing TE-6134 = ${formatNum(data['TE6134_C'], 1)} °C (High : 115 °C)\n`;
+    message += `▸ CT SU = Fan : ${formatInt(data['CT_SU_Fan'])} & Pompa : ${formatInt(data['CT_SU_Pompa'])}\n`;
+    message += `▸ CT SA = Fan : ${formatInt(data['CT_SA_Fan'])} & Pompa : ${formatInt(data['CT_SA_Pompa'])}\n\n`;
     
     message += `*Kegiatan Shift ${data.Shift}*\n`;
     message += data.Kegiatan_Shift || '-';
@@ -2940,7 +2994,7 @@ async function submitBalancingData() {
         'TI6146_C': parseFloat(document.getElementById('ti6146')?.value) || 0,
         'TI6126_C': parseFloat(document.getElementById('ti6126')?.value) || 0,
         'Axial_Displacement_mm': parseFloat(document.getElementById('axialDisplacement')?.value) || 0,
-        'VI6102_Î¼m': parseFloat(document.getElementById('vi6102')?.value) || 0,
+        'VI6102_μm': parseFloat(document.getElementById('vi6102')?.value) || 0,
         'TE6134_C': parseFloat(document.getElementById('te6134')?.value) || 0,
         'CT_SU_Fan': parseInt(document.getElementById('ctSuFan')?.value) || 0,
         'CT_SU_Pompa': parseInt(document.getElementById('ctSuPompa')?.value) || 0,
@@ -2964,7 +3018,7 @@ async function submitBalancingData() {
         });
         
         progress.complete();
-        showCustomAlert('âœ“ Data Balancing berhasil dikirim!', 'success');
+        showCustomAlert('✓ Data Balancing berhasil dikirim!', 'success');
         
         let balancingHistory = JSON.parse(localStorage.getItem(DRAFT_KEYS.BALANCING_HISTORY) || '[]');
         balancingHistory.push({
@@ -3070,12 +3124,12 @@ function renderCTMenu() {
                 <div class="area-info">
                     <div class="area-name">${areaName}</div>
                     <div class="area-meta ${hasAbnormal ? 'warning' : ''}">
-                        ${hasAbnormal ? 'âš ï¸ Ada parameter bermasalah â€¢ ' : ''}${filled} dari ${total} parameter
+                        ${hasAbnormal ? '⚠️ Ada parameter bermasalah • ' : ''}${filled} dari ${total} parameter
                     </div>
                 </div>
                 <div class="area-status">
                     ${hasAbnormal ? '<span style="color: #ef4444; margin-right: 4px;">!</span>' : ''}
-                    ${isCompleted ? 'âœ“' : 'â¯'}
+                    ${isCompleted ? '✓' : '›'}
                 </div>
             </div>
         `;
@@ -3125,7 +3179,8 @@ function openCTArea(areaName) {
 
 function renderCTProgressDots() {
     const container = document.getElementById('ctProgressDots');
-    if (!container) return;
+    if (!container || !activeAreaCT || !AREAS_CT[activeAreaCT]) return;
+    
     const total = AREAS_CT[activeAreaCT].length;
     let html = '';
     
@@ -3150,10 +3205,10 @@ function renderCTProgressDots() {
 }
 
 function jumpToCTStep(index) {
-    const fullLabel = AREAS_CT[activeAreaCT][activeIdxCT];
+    const fullLabel = AREAS_CT[activeAreaCT]?.[activeIdxCT];
     const input = document.getElementById('ctValInput');
     
-    if (input && input.value.trim()) {
+    if (fullLabel && input && input.value.trim()) {
         if (!currentInputCT[activeAreaCT]) currentInputCT[activeAreaCT] = {};
         
         const checkedStatus = document.querySelector('input[name="ctParamStatus"]:checked');
@@ -3178,6 +3233,8 @@ function jumpToCTStep(index) {
 }
 
 function detectCTInputType(label) {
+    if (!label) return { type: 'text', options: null, pattern: null };
+    
     if (label.includes('(A/M)') || label.includes('(A/B)')) {
         return {
             type: 'select',
@@ -3196,15 +3253,19 @@ function detectCTInputType(label) {
 }
 
 function getCTUnit(label) {
+    if (!label) return '';
     const match = label.match(/\(([^)]+)\)/);
     return match ? match[1] : "";
 }
 
 function getCTParamName(label) {
+    if (!label) return '';
     return label.split(' (')[0];
 }
 
 function handleCTStatusChange(checkbox) {
+    if (!checkbox) return;
+    
     const chip = checkbox.closest('.status-chip');
     const noteContainer = document.getElementById('ctStatusNoteContainer');
     const valInput = document.getElementById('ctValInput');
@@ -3212,12 +3273,13 @@ function handleCTStatusChange(checkbox) {
     document.querySelectorAll('input[name="ctParamStatus"]').forEach(cb => {
         if (cb !== checkbox) {
             cb.checked = false;
-            cb.closest('.status-chip').classList.remove('active');
+            const cbChip = cb.closest('.status-chip');
+            if (cbChip) cbChip.classList.remove('active');
         }
     });
     
     if (checkbox.checked) {
-        chip.classList.add('active');
+        if (chip) chip.classList.add('active');
         if (noteContainer) noteContainer.style.display = 'block';
         
         setTimeout(() => {
@@ -3231,7 +3293,7 @@ function handleCTStatusChange(checkbox) {
             valInput.style.background = 'rgba(100, 116, 139, 0.2)';
         }
     } else {
-        chip.classList.remove('active');
+        if (chip) chip.classList.remove('active');
         if (noteContainer) noteContainer.style.display = 'none';
         const noteInput = document.getElementById('ctStatusNote');
         if (noteInput) noteInput.value = '';
@@ -3249,7 +3311,11 @@ function handleCTStatusChange(checkbox) {
 }
 
 function saveCurrentCTStatusToDraft() {
+    if (!activeAreaCT || !AREAS_CT[activeAreaCT]) return;
+    
     const fullLabel = AREAS_CT[activeAreaCT][activeIdxCT];
+    if (!fullLabel) return;
+    
     const input = document.getElementById('ctValInput');
     const checkedStatus = document.querySelector('input[name="ctParamStatus"]:checked');
     const note = document.getElementById('ctStatusNote')?.value || '';
@@ -3282,7 +3348,8 @@ function saveCurrentCTStatusToDraft() {
 function loadCTAbnormalStatus(fullLabel) {
     document.querySelectorAll('input[name="ctParamStatus"]').forEach(cb => {
         cb.checked = false;
-        cb.closest('.status-chip').classList.remove('active');
+        const chip = cb.closest('.status-chip');
+        if (chip) chip.classList.remove('active');
     });
     
     const noteContainer = document.getElementById('ctStatusNoteContainer');
@@ -3311,7 +3378,8 @@ function loadCTAbnormalStatus(fullLabel) {
             const checkbox = document.querySelector(`input[value="${firstLine}"]`);
             if (checkbox) {
                 checkbox.checked = true;
-                checkbox.closest('.status-chip').classList.add('active');
+                const chip = checkbox.closest('.status-chip');
+                if (chip) chip.classList.add('active');
                 if (noteContainer) noteContainer.style.display = 'block';
                 if (noteInput) noteInput.value = secondLine;
                 
@@ -3329,7 +3397,11 @@ function loadCTAbnormalStatus(fullLabel) {
 }
 
 function showCTStep() {
+    if (!activeAreaCT || !AREAS_CT[activeAreaCT]) return;
+    
     const fullLabel = AREAS_CT[activeAreaCT][activeIdxCT];
+    if (!fullLabel) return;
+    
     const total = AREAS_CT[activeAreaCT].length;
     const inputType = detectCTInputType(fullLabel);
     currentInputTypeCT = inputType.type;
@@ -3429,8 +3501,11 @@ function showCTStep() {
 }
 
 function saveCTStep() {
+    if (!activeAreaCT || !AREAS_CT[activeAreaCT]) return;
+    
     const input = document.getElementById('ctValInput');
     const fullLabel = AREAS_CT[activeAreaCT][activeIdxCT];
+    if (!fullLabel) return;
     
     if (!currentInputCT[activeAreaCT]) currentInputCT[activeAreaCT] = {};
     
@@ -3466,7 +3541,7 @@ function saveCTStep() {
     // Save CT photo for current step - NEW from v1.7.1
     saveCTParamPhotosToDraft();
     
-    if (activeIdxCT < AREAS_CT[activeAreaCT].length - 1) {
+    if (activeIdxCT < (AREAS_CT[activeAreaCT]?.length || 0) - 1) {
         activeIdxCT++;
         showCTStep();
     } else {
@@ -3476,42 +3551,49 @@ function saveCTStep() {
 }
 
 function goBackCT() {
+    if (!activeAreaCT || !AREAS_CT[activeAreaCT]) {
+        navigateTo('ctAreaListScreen');
+        return;
+    }
+    
     const input = document.getElementById('ctValInput');
     const fullLabel = AREAS_CT[activeAreaCT][activeIdxCT];
     
-    if (!currentInputCT[activeAreaCT]) currentInputCT[activeAreaCT] = {};
-    
-    let valueToSave = '';
-    if (input && input.value.trim()) {
-        valueToSave = input.value.trim();
-    }
-    
-    const checkedStatus = document.querySelector('input[name="ctParamStatus"]:checked');
-    const note = document.getElementById('ctStatusNote')?.value || '';
-    
-    if (checkedStatus) {
-        if (checkedStatus.value === 'NOT_INSTALLED') {
-            valueToSave = 'NOT_INSTALLED';
-            if (note) valueToSave += '\n' + note;
-        } else {
-            if (note) {
-                valueToSave = `${checkedStatus.value}\n${note}`;
+    if (fullLabel) {
+        if (!currentInputCT[activeAreaCT]) currentInputCT[activeAreaCT] = {};
+        
+        let valueToSave = '';
+        if (input && input.value.trim()) {
+            valueToSave = input.value.trim();
+        }
+        
+        const checkedStatus = document.querySelector('input[name="ctParamStatus"]:checked');
+        const note = document.getElementById('ctStatusNote')?.value || '';
+        
+        if (checkedStatus) {
+            if (checkedStatus.value === 'NOT_INSTALLED') {
+                valueToSave = 'NOT_INSTALLED';
+                if (note) valueToSave += '\n' + note;
             } else {
-                valueToSave = checkedStatus.value;
+                if (note) {
+                    valueToSave = `${checkedStatus.value}\n${note}`;
+                } else {
+                    valueToSave = checkedStatus.value;
+                }
             }
         }
+        
+        if (valueToSave) {
+            currentInputCT[activeAreaCT][fullLabel] = valueToSave;
+        } else {
+            delete currentInputCT[activeAreaCT][fullLabel];
+        }
+        
+        localStorage.setItem(DRAFT_KEYS_CT.LOGSHEET, JSON.stringify(currentInputCT));
+        
+        // Save CT photo for current step - NEW from v1.7.1
+        saveCTParamPhotosToDraft();
     }
-    
-    if (valueToSave) {
-        currentInputCT[activeAreaCT][fullLabel] = valueToSave;
-    } else {
-        delete currentInputCT[activeAreaCT][fullLabel];
-    }
-    
-    localStorage.setItem(DRAFT_KEYS_CT.LOGSHEET, JSON.stringify(currentInputCT));
-    
-    // Save CT photo for current step - NEW from v1.7.1
-    saveCTParamPhotosToDraft();
     
     if (activeIdxCT > 0) {
         activeIdxCT--;
@@ -3555,7 +3637,7 @@ async function sendCTToSheet() {
         });
         
         progress.complete();
-        showCustomAlert('âœ“ Data CT berhasil dikirim ke sistem!', 'success');
+        showCustomAlert('✓ Data CT berhasil dikirim ke sistem!', 'success');
         
         currentInputCT = {};
         ctParamPhotos = {}; // Clear CT photos - NEW from v1.7.1
@@ -3700,7 +3782,7 @@ window.addEventListener('appinstalled', () => {
     hideCustomInstallBanner();
     deferredPrompt = null;
     installBannerShown = true;
-    showToast('âœ“ Aplikasi berhasil diinstall!', 'success');
+    showToast('✓ Aplikasi berhasil diinstall!', 'success');
 });
 
 function showCustomInstallBanner() {
@@ -3737,7 +3819,7 @@ function showCustomInstallBanner() {
                 font-size: 40px;
                 box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
             ">
-                âš¡
+                ⚡
             </div>
             
             <h3 style="color: #f8fafc; font-size: 1.25rem; font-weight: 700; margin-bottom: 8px;">
@@ -3810,7 +3892,7 @@ async function installPWA() {
     
     if (outcome === 'accepted') {
         hideCustomInstallBanner();
-        showToast('âœ“ Menginstall aplikasi...', 'success');
+        showToast('✓ Menginstall aplikasi...', 'success');
     } else {
         hideCustomInstallBanner();
     }
