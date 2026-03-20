@@ -26,7 +26,7 @@
     <meta name="robots" content="noindex, nofollow">
     
     <!-- Manifest -->
-    <link rel="manifest" href="manifest.json?v=1.2.3">
+    <link rel="manifest" href="manifest.json?v=1.6.1">
     
     <!-- Icons untuk iOS -->
     <link rel="apple-touch-icon" href="icon-192x192.png">
@@ -405,15 +405,182 @@
         .logsheet-select-card.ct-version:active .logsheet-arrow {
             color: #3b82f6;
         }
+
+        /* ============================================
+           PHOTO VALIDATION STYLES - NEW v1.6.1
+           ============================================ */
+        .photo-validation-card {
+            margin: 16px 0;
+            padding: 16px;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 12px;
+            animation: slideUp 0.3s ease;
+        }
+
+        .photo-validation-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 12px;
+        }
+
+        .photo-validation-preview {
+            width: 100%;
+            height: 160px;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            border: 2px dashed rgba(148, 163, 184, 0.3);
+            transition: all 0.2s;
+        }
+
+        .photo-validation-preview.has-photo {
+            border: 2px solid #10b981;
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .photo-validation-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: #64748b;
+        }
+
+        .photo-placeholder svg {
+            stroke: #64748b;
+        }
+
+        .btn-photo {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-photo:active {
+            transform: scale(0.98);
+        }
+
+        .btn-photo.has-photo {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .btn-photo-secondary {
+            width: 100%;
+            padding: 10px;
+            background: rgba(100, 116, 139, 0.2);
+            color: #94a3b8;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-photo-secondary:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        /* CT Photo Validation Styles */
+        #ctParamScreen .photo-validation-card {
+            background: rgba(59, 130, 246, 0.05);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        #ctParamScreen .photo-validation-header {
+            color: #60a5fa;
+        }
+
+        #ctParamScreen .btn-photo {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+
+        #ctParamScreen .btn-photo.has-photo {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        #ctParamScreen .photo-validation-preview.has-photo {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        /* Photo Badge Indicator */
+        .photo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .photo-badge.no-photo {
+            background: rgba(100, 116, 139, 0.15);
+            color: #64748b;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Progress dot dengan foto indicator */
+        .progress-dot.has-photo {
+            background: #10b981 !important;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+        }
+
+        .progress-dot.has-photo.has-issue {
+            background: #ef4444 !important;
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
+        }
     </style>
     
-    <link rel="stylesheet" href="style.css?v=1.2.0">
-    <link rel="manifest" href="manifest.json?v=1.2.0">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3Eâš¡%3C/text%3E%3C/svg%3E">
+    <link rel="stylesheet" href="style.css?v=1.6.1">
+    <link rel="manifest" href="manifest.json?v=1.6.1">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%3C/text%3E%3C/svg%3E">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<base target="_blank">
 </head>
 <body>
 
@@ -459,7 +626,7 @@
     <div class="alert-content" style="background: rgba(30, 41, 59, 0.98); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 20px; padding: 24px; width: 90%; max-width: 360px;">
         <div style="text-align: center; margin-bottom: 20px;">
             <div style="width: 64px; height: 64px; margin: 0 auto 16px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px;">
-                ðŸ”
+                
             </div>
             <h3 style="margin: 0; font-size: 1.25rem; color: #f8fafc;">Ganti Password</h3>
             <p style="margin: 8px 0 0; font-size: 0.875rem; color: #94a3b8;">@<span id="cpUsername">-</span></p>
@@ -472,7 +639,7 @@
                 <div style="position: relative;">
                     <input type="password" id="cpOldPassword" required style="width: 100%; padding: 12px 40px 12px 12px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: #f8fafc; font-size: 1rem;">
                     <button type="button" onclick="toggleCPVisibility('cpOldPassword', this)" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer;">
-                        ðŸ‘ï¸
+                        
                     </button>
                 </div>
             </div>
@@ -483,7 +650,7 @@
                 <div style="position: relative;">
                     <input type="password" id="cpNewPassword" required minlength="4" style="width: 100%; padding: 12px 40px 12px 12px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: #f8fafc; font-size: 1rem;">
                     <button type="button" onclick="toggleCPVisibility('cpNewPassword', this)" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer;">
-                        ðŸ‘ï¸
+                        
                     </button>
                 </div>
                 <small style="color: #64748b; font-size: 0.75rem;">Minimal 4 karakter</small>
@@ -495,7 +662,7 @@
                 <div style="position: relative;">
                     <input type="password" id="cpConfirmPassword" required style="width: 100%; padding: 12px 40px 12px 12px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: #f8fafc; font-size: 1rem;">
                     <button type="button" onclick="toggleCPVisibility('cpConfirmPassword', this)" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer;">
-                        ðŸ‘ï¸
+                        
                     </button>
                 </div>
                 <div id="cpError" style="display: none; color: #ef4444; font-size: 0.875rem; margin-top: 8px; padding: 8px; background: rgba(239, 68, 68, 0.1); border-radius: 6px;"></div>
@@ -521,14 +688,14 @@
             <div class="login-header">
                 <div class="logo-container animated">
                     <img src="logo.png" alt="Logo" id="loginLogo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-                    <div class="logo-fallback" style="display:none;">âš¡</div>
+                    <div class="logo-fallback" style="display:none;"></div>
                 </div>
                 <h1 class="app-title">TURBINE LOGSHEET PRO</h1>
                 <p class="app-subtitle">PT Petrokimia Gresik</p>
             </div>
                             
             <div class="login-form glass">
-                <h2 class="login-title" style="text-align: center; margin-bottom: 8px;">ðŸ” Login Operator</h2>
+                <h2 class="login-title" style="text-align: center; margin-bottom: 8px;"> Login Operator</h2>
                 <p class="login-subtitle" style="text-align: center; margin-bottom: 20px; font-size: 0.875rem; color: #64748b;">Masukkan username dan password</p>
                 
                 <!-- Username Input -->
@@ -567,19 +734,19 @@
                 <p id="loginError" class="login-error" style="display: none; color: #ef4444; font-size: 0.875rem; text-align: center; margin-bottom: 12px; padding: 8px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2);"></p>
                 
                 <button class="btn btn-primary btn-full" onclick="loginOperator()" style="margin-top: 8px;">
-                    <span>ðŸ”“ Masuk</span>
+                    <span> Masuk</span>
                 </button>
                 
                 <div style="margin-top: 20px; text-align: center;">
                     <small style="color: #475569; font-size: 0.75rem;">
-                        ðŸ’¡ Default login:<br>
+                        Default login:<br>
                         NIK / NIK<br>
                    </small>
                 </div>
             </div>
             
             <div class="login-footer" style="text-align: center; margin-top: auto; padding-top: 24px;">
-                <p style="font-size: 0.75rem; color: #64748b;">PT Petrokimia Gresik â€¢ Unit III B</p>
+                <p style="font-size: 0.75rem; color: #64748b;">PT Petrokimia Gresik  Unit III B</p>
                 <span class="version-tag" style="display: inline-block; margin-top: 8px; padding: 4px 12px; background: rgba(14, 165, 233, 0.1); color: #38bdf8; border-radius: 9999px; font-size: 0.75rem;">
                     v<span id="versionDisplay"></span>
                 </span>
@@ -610,7 +777,7 @@
             <div class="home-hero-content">
                 <div class="logo-container small animated">
                     <img src="logo.png" alt="Logo" id="mainLogo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-                    <div class="logo-fallback" style="display:none;">âš¡</div>
+                    <div class="logo-fallback" style="display:none;"></div>
                 </div>
                 <h1 class="home-title">LOGSHEET DIGITAL</h1>
                 <p class="home-subtitle">Pilih Menu Untuk Memulai</p>
@@ -738,7 +905,7 @@
 
         <div class="list-container">
             <div class="list-item" onclick="openTPMArea('Area #6200')">
-                <div class="item-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">ðŸ”§</div>
+                <div class="item-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);"></div>
                 <div class="item-content">
                     <h4>Area #6200</h4>
                     <p>Peralatan & Sistem Unit</p>
@@ -746,7 +913,7 @@
             </div>
 
             <div class="list-item" onclick="openTPMArea('Area Turbin')">
-                <div class="item-icon" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);">âš™ï¸</div>
+                <div class="item-icon" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);"></div>
                 <div class="item-content">
                     <h4>Area Turbin</h4>
                     <p>Maintenance Sistem Turbin</p>
@@ -754,7 +921,7 @@
             </div>
 
             <div class="list-item" onclick="openTPMArea('Area Cooling Tower')">
-                <div class="item-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">ðŸ—¼</div>
+                <div class="item-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);"></div>
                 <div class="item-content">
                     <h4>Cooling Tower</h4>
                     <p>Sistem Pendingin</p>
@@ -762,7 +929,7 @@
             </div>
 
             <div class="list-item" onclick="openTPMArea('Area Compressor')">
-                <div class="item-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">ðŸŒ¬ï¸</div>
+                <div class="item-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);"></div>
                 <div class="item-content">
                     <h4>Area Compressor</h4>
                     <p>Sistem Kompresor</p>
@@ -800,7 +967,7 @@
                     </div>
                 </div>
                 <button class="btn btn-camera" onclick="document.getElementById('tpmCamera').click()" style="width: 100%; padding: 12px; background: #f59e0b; color: white; border: none; border-radius: 12px; cursor: pointer;">
-                    <span>ðŸ“· Buka Kamera</span>
+                    <span> Buka Kamera</span>
                 </button>
             </div>
 
@@ -841,7 +1008,7 @@
             </div>
 
             <button class="btn btn-submit btn-full" onclick="submitTPMData()" style="width: 100%; padding: 16px; background: #10b981; color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; margin-top: 20px;">
-                <span>ðŸ’¾ Simpan Data TPM</span>
+                <span> Simpan Data TPM</span>
             </button>
         </div>
     </div>
@@ -876,11 +1043,11 @@
         <div class="areas-list" id="areaList"></div>
 
         <button class="btn btn-floating" id="submitBtn" onclick="sendToSheet()">
-            <span>ðŸ“¤ Kirim Data</span>
+            <span> Kirim Data</span>
         </button>
     </div>
 
-    <!-- TURBINE PARAMETER INPUT SCREEN -->
+    <!-- TURBINE PARAMETER INPUT SCREEN with PHOTO VALIDATION v1.6.1 -->
     <div id="paramScreen" class="screen">
         <div class="screen-header glass">
             <button class="btn-icon" onclick="goBack()">
@@ -897,6 +1064,9 @@
         </div>
 
         <div class="param-container">
+            <!-- Hidden file input for photo -->
+            <input type="file" id="logsheetCamera" accept="image/*" capture="environment" style="display: none;" onchange="handleLogsheetPhoto(event)">
+            
             <div class="param-card glass">
                 <div class="param-header">
                     <span class="param-area" id="currentAreaName">Area</span>
@@ -925,21 +1095,47 @@
                 </div>
             </div>
             
-            <!-- Photo Section - NEW from v1.7.1 -->
-            <input type="file" id="paramCamera" accept="image/*" capture="environment" style="display: none;" onchange="handleParamPhoto(event)">
-            
-            <div class="photo-card glass param-photo-card" id="paramPhotoSection">
-                <div class="photo-preview" id="paramPhotoPreview" style="height: 160px; background: #1e293b; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
-                    <div class="photo-placeholder" style="text-align: center; color: #64748b;">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 8px;">
+            <!-- PHOTO VALIDATION SECTION - NEW v1.6.1 -->
+            <div class="photo-validation-card" id="photoValidationCard">
+                <div class="photo-validation-header">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    <span>Dokumentasi Foto Parameter</span>
+                    <span class="photo-badge no-photo" id="photoBadge">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                             <circle cx="12" cy="13" r="4"/>
                         </svg>
-                        <div style="font-size: 0.875rem;">Ambil Foto Validasi</div>
+                        <span id="photoBadgeText">Belum ada foto</span>
+                    </span>
+                </div>
+                
+                <div class="photo-validation-preview" id="photoPreview">
+                    <div class="photo-placeholder">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                            <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                        <span>Ambil foto parameter</span>
                     </div>
                 </div>
-                <button class="btn btn-camera" onclick="document.getElementById('paramCamera').click()" style="width: 100%; padding: 10px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">
-                    <span>ðŸ“· Buka Kamera</span>
+                
+                <button class="btn-photo" id="btnTakePhoto" onclick="document.getElementById('logsheetCamera').click()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    <span id="btnTakePhotoText">Ambil Foto</span>
+                </button>
+                
+                <button class="btn-photo-secondary" id="btnRetakePhoto" onclick="retakeLogsheetPhoto()" style="display: none;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74-2.74L3 12"/>
+                        <path d="M3 3v9h9"/>
+                    </svg>
+                    <span>Ambil Ulang Foto</span>
                 </button>
             </div>
             
@@ -957,19 +1153,19 @@
                 <div class="status-options">
                     <label class="status-chip" data-status="ERROR">
                         <input type="checkbox" name="paramStatus" value="ERROR" onchange="handleStatusChange(this)">
-                        <span class="chip-icon">âš ï¸</span>
+                        <span class="chip-icon"></span>
                         <span class="chip-text">ERROR</span>
                     </label>
                     
                     <label class="status-chip" data-status="UPPER">
                         <input type="checkbox" name="paramStatus" value="UPPER" onchange="handleStatusChange(this)">
-                        <span class="chip-icon">â¬†ï¸</span>
+                        <span class="chip-icon"></span>
                         <span class="chip-text">UPPER</span>
                     </label>
                     
                     <label class="status-chip" data-status="NOT_INSTALLED">
                         <input type="checkbox" name="paramStatus" value="NOT_INSTALLED" onchange="handleStatusChange(this)">
-                        <span class="chip-icon">âŒ</span>
+                        <span class="chip-icon"></span>
                         <span class="chip-text">TIDAK TERPASANG</span>
                     </label>
                 </div>
@@ -1022,11 +1218,11 @@
         <div class="areas-list" id="ctAreaList"></div>
 
         <button class="btn btn-floating" id="ctSubmitBtn" onclick="sendCTToSheet()" style="display: none; background: #3b82f6; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);">
-            <span>ðŸ“¤ Kirim Data CT</span>
+            <span> Kirim Data CT</span>
         </button>
     </div>
 
-    <!-- CT PARAMETER INPUT SCREEN -->
+    <!-- CT PARAMETER INPUT SCREEN with PHOTO VALIDATION v1.6.1 -->
     <div id="ctParamScreen" class="screen">
         <div class="screen-header glass">
             <button class="btn-icon" onclick="goBackCT()">
@@ -1043,6 +1239,9 @@
         </div>
 
         <div class="param-container">
+            <!-- Hidden file input for CT photo -->
+            <input type="file" id="ctLogsheetCamera" accept="image/*" capture="environment" style="display: none;" onchange="handleCTLogsheetPhoto(event)">
+            
             <div class="param-card glass">
                 <div class="param-header">
                     <span class="param-area" id="ctCurrentAreaName" style="color: #3b82f6;">Area</span>
@@ -1071,21 +1270,47 @@
                 </div>
             </div>
             
-            <!-- Photo Section for CT - NEW from v1.7.1 -->
-            <input type="file" id="ctParamCamera" accept="image/*" capture="environment" style="display: none;" onchange="handleCTParamPhoto(event)">
-            
-            <div class="photo-card glass param-photo-card" id="ctParamPhotoSection">
-                <div class="photo-preview" id="ctParamPhotoPreview" style="height: 160px; background: #1e293b; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
-                    <div class="photo-placeholder" style="text-align: center; color: #64748b;">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 8px;">
+            <!-- PHOTO VALIDATION SECTION FOR CT - NEW v1.6.1 -->
+            <div class="photo-validation-card" id="ctPhotoValidationCard">
+                <div class="photo-validation-header">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    <span>Dokumentasi Foto Parameter</span>
+                    <span class="photo-badge no-photo" id="ctPhotoBadge">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                             <circle cx="12" cy="13" r="4"/>
                         </svg>
-                        <div style="font-size: 0.875rem;">Ambil Foto Validasi</div>
+                        <span id="ctPhotoBadgeText">Belum ada foto</span>
+                    </span>
+                </div>
+                
+                <div class="photo-validation-preview" id="ctPhotoPreview">
+                    <div class="photo-placeholder">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                            <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                        <span>Ambil foto parameter</span>
                     </div>
                 </div>
-                <button class="btn btn-camera" onclick="document.getElementById('ctParamCamera').click()" style="width: 100%; padding: 10px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">
-                    <span>ðŸ“· Buka Kamera</span>
+                
+                <button class="btn-photo" id="ctBtnTakePhoto" onclick="document.getElementById('ctLogsheetCamera').click()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    <span id="ctBtnTakePhotoText">Ambil Foto</span>
+                </button>
+                
+                <button class="btn-photo-secondary" id="ctBtnRetakePhoto" onclick="retakeCTLogsheetPhoto()" style="display: none;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74-2.74L3 12"/>
+                        <path d="M3 3v9h9"/>
+                    </svg>
+                    <span>Ambil Ulang Foto</span>
                 </button>
             </div>
             
@@ -1103,19 +1328,19 @@
                 <div class="status-options">
                     <label class="status-chip" data-status="ERROR">
                         <input type="checkbox" name="ctParamStatus" value="ERROR" onchange="handleCTStatusChange(this)">
-                        <span class="chip-icon">âš ï¸</span>
+                        <span class="chip-icon"></span>
                         <span class="chip-text">ERROR</span>
                     </label>
                     
                     <label class="status-chip" data-status="MAINTENANCE">
                         <input type="checkbox" name="ctParamStatus" value="MAINTENANCE" onchange="handleCTStatusChange(this)">
-                        <span class="chip-icon">ðŸ”§</span>
+                        <span class="chip-icon"></span>
                         <span class="chip-text">MAINTENANCE</span>
                     </label>
                     
                     <label class="status-chip" data-status="NOT_INSTALLED">
                         <input type="checkbox" name="ctParamStatus" value="NOT_INSTALLED" onchange="handleCTStatusChange(this)">
-                        <span class="chip-icon">âŒ</span>
+                        <span class="chip-icon"></span>
                         <span class="chip-text">TIDAK TERPASANG</span>
                     </label>
                 </div>
@@ -1148,7 +1373,7 @@
             </button>
             <div class="header-title-group">
                 <h2>Input Balancing</h2>
-                <span class="header-subtitle" id="balancingShiftInfo">Shift 3 â€¢ Auto Update</span>
+                <span class="header-subtitle" id="balancingShiftInfo">Shift 3  Auto Update</span>
             </div>
             <div class="user-pill">
                 <span id="balancingUser">-</span>
@@ -1213,7 +1438,7 @@
                         <label id="eksporLabel" style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; transition: color 0.3s;">Ekspor (MW)</label>
                         <input type="number" id="eksporMW" step="0.001" placeholder="0.000" oninput="handleEksporInput(this)" style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 8px; color: white; font-size: 1rem; transition: all 0.3s;">
                         <small id="eksporHint" style="display: block; margin-top: 4px; font-size: 0.75rem; color: #94a3b8;">
-                            ðŸ’¡ <strong>Minus (-) = Ekspor</strong> | <strong>Plus (+) = Impor</strong>
+                             <strong>Minus (-) = Ekspor</strong> | <strong>Plus (+) = Impor</strong>
                         </small>
                     </div>
                 </div>
@@ -1391,19 +1616,19 @@
                 <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 16px; color: #f8fafc;">Monitoring</h3>
                 <div class="monitoring-grid">
                     <div class="monitoring-item">
-                        <label>Steam Extraction PI-6122 (kg/cmÂ²)</label>
+                        <label>Steam Extraction PI-6122 (kg/cm)</label>
                         <input type="number" id="pi6122" step="0.01" placeholder="0.00" style="width: 100%; padding: 10px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 6px; color: white;">
-                        <label style="margin-top: 4px; font-size: 0.75rem;">TI-6112 (Â°C)</label>
+                        <label style="margin-top: 4px; font-size: 0.75rem;">TI-6112 (C)</label>
                         <input type="number" id="ti6112" step="0.1" placeholder="0.0" style="width: 100%; padding: 10px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 6px; color: white;">
                     </div>
                     
                     <div class="monitoring-item">
-                        <label>Temp. Cooling Air Inlet TI-6146/47 (Â°C)</label>
+                        <label>Temp. Cooling Air Inlet TI-6146/47 (C)</label>
                         <input type="number" id="ti6146" step="0.01" placeholder="0.00" style="width: 100%; padding: 10px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 6px; color: white;">
                     </div>
                     
                     <div class="monitoring-item">
-                        <label>Temp. Lube Oil TI-6126 (Â°C)</label>
+                        <label>Temp. Lube Oil TI-6126 (C)</label>
                         <input type="number" id="ti6126" step="0.01" placeholder="0.00" style="width: 100%; padding: 10px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 6px; color: white;">
                     </div>
                     
@@ -1416,7 +1641,7 @@
                     </div>
                     
                     <div class="monitoring-item with-limit">
-                        <label>Vibrasi VI-6102 (Î¼m)</label>
+                        <label>Vibrasi VI-6102 (m)</label>
                         <div class="limit-input">
                             <input type="number" id="vi6102" step="0.01" placeholder="0.00" style="padding: 10px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 6px; color: white;">
                             <span class="limit-badge">High: 85</span>
@@ -1424,7 +1649,7 @@
                     </div>
                     
                     <div class="monitoring-item with-limit">
-                        <label>Temp. Journal Bearing TE-6134 (Â°C)</label>
+                        <label>Temp. Journal Bearing TE-6134 (C)</label>
                         <div class="limit-input">
                             <input type="number" id="te6134" step="0.1" placeholder="0.0" style="padding: 10px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 6px; color: white;">
                             <span class="limit-badge">High: 115</span>
@@ -1530,43 +1755,23 @@
 <script>
     // Tambahan untuk update UI user di Logsheet Selection Screen
     document.addEventListener('DOMContentLoaded', function() {
-        try {
-            // Override navigateTo untuk update user info di logsheetSelectScreen
-            const originalNavigateTo = window.navigateTo;
-            window.navigateTo = function(screenId) {
-                try {
-                    if (screenId === 'logsheetSelectScreen' && currentUser) {
-                        const userEl = document.getElementById('logsheetSelectUser');
-                        if (userEl) userEl.textContent = currentUser.name || currentUser.username;
-                    }
-                    // Panggil fungsi asli jika ada, atau jalankan logika default
-                    if (typeof originalNavigateTo === 'function') {
-                        originalNavigateTo(screenId);
-                    } else {
-                        // Default navigation logic jika app.js belum load
-                        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                        const target = document.getElementById(screenId);
-                        if (target) target.classList.add('active');
-                    }
-                } catch (e) {
-                    console.error('Error in navigateTo:', e);
-                }
-            };
-        } catch (e) {
-            console.error('Error setting up navigateTo override:', e);
-        }
-        
-        // Always ensure loader is hidden after max 5 seconds
-        setTimeout(function() {
-            const loader = document.getElementById('loader');
-            if (loader && loader.style.display !== 'none') {
-                loader.style.opacity = '0';
-                loader.style.transition = 'opacity 0.5s ease';
-                setTimeout(function() {
-                    loader.style.display = 'none';
-                }, 500);
+        // Override navigateTo untuk update user info di logsheetSelectScreen
+        const originalNavigateTo = window.navigateTo;
+        window.navigateTo = function(screenId) {
+            if (screenId === 'logsheetSelectScreen' && currentUser) {
+                const userEl = document.getElementById('logsheetSelectUser');
+                if (userEl) userEl.textContent = currentUser.name || currentUser.username;
             }
-        }, 5000);
+            // Panggil fungsi asli jika ada, atau jalankan logika default
+            if (typeof originalNavigateTo === 'function') {
+                originalNavigateTo(screenId);
+            } else {
+                // Default navigation logic jika app.js belum load
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                const target = document.getElementById(screenId);
+                if (target) target.classList.add('active');
+            }
+        };
     });
 </script>
 </body>
