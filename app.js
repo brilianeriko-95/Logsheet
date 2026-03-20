@@ -6,7 +6,7 @@
 // ============================================
 // 1. KONFIGURASI & KONSTANTA
 // ============================================
-const APP_VERSION = '1.7.1';
+const APP_VERSION = '1.7.2';
 const APP_NAME = 'Turbine Logsheet Pro';
 
 const AUTH_CONFIG = {
