@@ -1,955 +1,536 @@
-﻿// ============================================
-// TURBINE LOGSHEET PRO - FULL APPLICATION
-// Version: 1.6.1 (Fixed Sync & Structure)
-// ============================================
+/**
+ * Turbine Log PWA - Main Application
+ * Version: 1.6.1 (with Photo Feature from v1.7.1)
+ * Description: Logsheet dengan fitur foto validasi parameter
+ */
 
 // ============================================
-// 1. KONFIGURASI & KONSTANTA
+// 1. CONFIGURATION & CONSTANTS
 // ============================================
-const APP_VERSION = '1.6.1';
-const APP_NAME = 'Turbine Logsheet Pro';
 
-const AUTH_CONFIG = {
-    SESSION_KEY: 'turbine_session',
-    USER_KEY: 'turbine_user',
-    USERS_CACHE_KEY: 'turbine_users_cache',
-    SESSION_DURATION: 8 * 60 * 60 * 1000,        // 8 jam
-    REMEMBER_ME_DURATION: 30 * 24 * 60 * 60 * 1000  // 30 hari
-};
+const APP_VERSION = '1.6.2';
+const APP_NAME = 'Turbine Log';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycby3cp1kW1LoS4xX0zbbLpxiR5W4lRk_cT0x2q1p1QpI/dev';
 
 const DRAFT_KEYS = {
-    LOGSHEET: 'draft_turbine',
-    LOGSHEET_BACKUP: 'draft_turbine_backup',
-    BALANCING: 'balancing_draft',
-    TPM_OFFLINE: 'tpm_offline',
-    LOGSHEET_OFFLINE: 'offline_logsheets',
-    BALANCING_OFFLINE: 'balancing_offline',
-    TPM_HISTORY: 'tpm_history',
-    BALANCING_HISTORY: 'balancing_history'
+    LOGSHEET: 'turbine_logsheet_draft',
+    LOGSHEET_OFFLINE: 'turbine_logsheet_offline',
+    TPM: 'turbine_tpm_draft',
+    TPM_OFFLINE: 'turbine_tpm_offline',
+    TPM_HISTORY: 'turbine_tpm_history',
+    BALANCING: 'turbine_balancing_draft',
+    BALANCING_OFFLINE: 'turbine_balancing_offline',
+    BALANCING_HISTORY: 'turbine_balancing_history'
 };
 
 const DRAFT_KEYS_CT = {
-    LOGSHEET: 'draft_ct_logsheet',
-    OFFLINE: 'offline_ct_logsheets'
+    LOGSHEET: 'ct_logsheet_draft',
+    OFFLINE: 'ct_logsheet_offline'
 };
 
-// URL Google Apps Script Backend
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz1kTDfNXnVOZ33AqtZJyX0eCL9I9Lld8Tr3Nlap7p3EZVFegZ5NXs79OJoYFaNDcZ-ug/exec";
-
-// Fallback users untuk mode offline (legacy support)
-const OFFLINE_USERS = {
-    'admin': { password: 'admin123', role: 'admin', name: 'Administrator', department: 'Unit Utilitas 3B' },
-    'operator': { password: 'operator123', role: 'operator', name: 'Operator Shift', department: 'Unit Utilitas 3B' },
-    'utilitas3b': { password: 'pgresik2024', role: 'operator', name: 'Unit Utilitas 3B', department: 'Unit Utilitas 3B' }
+// PHOTO DRAFT KEYS - NEW from v1.7.1
+const PHOTO_DRAFT_KEYS = {
+    LOGSHEET_PHOTOS: 'turbine_logsheet_photos',
+    CT_LOGSHEET_PHOTOS: 'ct_logsheet_photos'
 };
 
-// Field configuration untuk Balancing
+const AUTH_CONFIG = {
+    SESSION_KEY: 'turbine_auth_session',
+    SESSION_DURATION: 12 * 60 * 60 * 1000,
+    USERS_CACHE_KEY: 'turbine_users_cache',
+    CACHE_DURATION: 24 * 60 * 60 * 1000
+};
+
+const AREAS = {
+    'STEAM TURBINE': [
+        'Load (MW)', 'Ekspor/Impor (MW)', 'PLN (MW)', 'UBB (MW)', 'PIE (MW)',
+        'TG-65 (MW)', 'TG-66 (MW)', 'GTG (MW)', 'SS-6500 (MW)',
+        'SS-2000 Active Power (MW)', 'SS-2000 Reactive Power (MVAR)',
+        'SS-2000 Current S (A)', 'SS-2000 Voltage (V)', 'SS-2000 HVS65 L02 (MW)',
+        'SS-2000 HVS65 L02 Current (A)', 'Total 3B (MW)'
+    ],
+    'STEAM FLOW': [
+        'Produksi Steam SA (t/h)', 'STG Steam (t/h)', 'PA2 Steam (t/h)',
+        'Puri2 Steam (t/h)', 'Melter SA2 (t/h)', 'Ejector (t/h)',
+        'Gland Seal (t/h)', 'Deaerator (t/h)', 'Dump Condenser (t/h)',
+        'PCV-6105 (t/h)', 'Total Konsumsi Steam (t/h)', 'LPS Balance (t/h)'
+    ],
+    'STEAM PRESSURE': [
+        'Steam Extraction PI-6122 (kg/cm2)', 'Steam Extraction TI-6112 (C)',
+        'Temp. Cooling Air Inlet TI-6146 (C)', 'Temp. Cooling Air Inlet TI-6147 (C)',
+        'Temp. Lube Oil TI-6126 (C)', 'Axial Displacement (mm)',
+        'Vibrasi VI-6102 (Î¼m)', 'Temp. Journal Bearing TE-6134 (C)'
+    ],
+    'COOLING TOWER SU': [
+        'CT SU Fan 1', 'CT SU Fan 2', 'CT SU Fan 3', 'CT SU Fan 4',
+        'CT SU Pompa 1', 'CT SU Pompa 2', 'CT SU Pompa 3', 'CT SU Pompa 4'
+    ],
+    'COOLING TOWER SA': [
+        'CT SA Fan 1', 'CT SA Fan 2', 'CT SA Fan 3', 'CT SA Fan 4',
+        'CT SA Pompa 1', 'CT SA Pompa 2', 'CT SA Pompa 3', 'CT SA Pompa 4'
+    ]
+};
+
+const AREAS_CT = {
+    'CT UNIT 1': [
+        'Fan 1 Status (A/M)', 'Fan 1 Running/Stop',
+        'Fan 2 Status (A/M)', 'Fan 2 Running/Stop',
+        'Pompa 1 Status (A/M)', 'Pompa 1 Running/Stop',
+        'Pompa 2 Status (A/M)', 'Pompa 2 Running/Stop',
+        'Inlet Temperature (C)', 'Outlet Temperature (C)',
+        'Pressure (kg/cm2)', 'Flow Rate (m3/h)'
+    ],
+    'CT UNIT 2': [
+        'Fan 1 Status (A/M)', 'Fan 1 Running/Stop',
+        'Fan 2 Status (A/M)', 'Fan 2 Running/Stop',
+        'Pompa 1 Status (A/M)', 'Pompa 1 Running/Stop',
+        'Pompa 2 Status (A/M)', 'Pompa 2 Running/Stop',
+        'Inlet Temperature (C)', 'Outlet Temperature (C)',
+        'Pressure (kg/cm2)', 'Flow Rate (m3/h)'
+    ],
+    'CT UNIT 3': [
+        'Fan 1 Status (A/M)', 'Fan 1 Running/Stop',
+        'Fan 2 Status (A/M)', 'Fan 2 Running/Stop',
+        'Pompa 1 Status (A/M)', 'Pompa 1 Running/Stop',
+        'Pompa 2 Status (A/M)', 'Pompa 2 Running/Stop',
+        'Inlet Temperature (C)', 'Outlet Temperature (C)',
+        'Pressure (kg/cm2)', 'Flow Rate (m3/h)'
+    ],
+    'CT UNIT 4': [
+        'Fan 1 Status (A/M)', 'Fan 1 Running/Stop',
+        'Fan 2 Status (A/M)', 'Fan 2 Running/Stop',
+        'Pompa 1 Status (A/M)', 'Pompa 1 Running/Stop',
+        'Pompa 2 Status (A/M)', 'Pompa 2 Running/Stop',
+        'Inlet Temperature (C)', 'Outlet Temperature (C)',
+        'Pressure (kg/cm2)', 'Flow Rate (m3/h)'
+    ]
+};
+
+const TPM_AREAS = [
+    'Steam Turbine Area',
+    'Generator Area',
+    'Lube Oil System',
+    'Control Room',
+    'Cooling Tower Area',
+    'Switchgear Area'
+];
+
+const INPUT_TYPES = {
+    'STATUS': {
+        patterns: ['Status (A/M)', 'Running/Stop', 'ON/OFF'],
+        options: {
+            'Status (A/M)': ['Auto', 'Manual'],
+            'Running/Stop': ['Running', 'Stop', 'Standby'],
+            'ON/OFF': ['ON', 'OFF']
+        }
+    }
+};
+
 const BALANCING_FIELDS = [
-    'balancingDate', 'balancingTime',
-    'loadMW', 'eksporMW',
+    'balancingDate', 'balancingTime', 'loadMW', 'eksporMW',
     'plnMW', 'ubbMW', 'pieMW', 'tg65MW', 'tg66MW', 'gtgMW',
-    'ss6500MW', 'ss2000Via', 'activePowerMW', 'reactivePowerMVAR', 
+    'ss6500MW', 'ss2000Via', 'activePowerMW', 'reactivePowerMVAR',
     'currentS', 'voltageV', 'hvs65l02MW', 'hvs65l02Current', 'total3BMW',
-    'fq1105',
-    'stgSteam', 'pa2Steam', 'puri2Steam', 'melterSA2', 
-    'ejectorSteam', 'glandSealSteam', 'deaeratorSteam', 
-    'dumpCondenser', 'pcv6105',
-    'pi6122', 'ti6112', 'ti6146', 'ti6126', 
-    'axialDisplacement', 'vi6102', 'te6134',
-    'ctSuFan', 'ctSuPompa', 'ctSaFan', 'ctSaPompa',
+    'fq1105', 'stgSteam', 'pa2Steam', 'puri2Steam', 'melterSA2',
+    'ejectorSteam', 'glandSealSteam', 'deaeratorSteam', 'dumpCondenser', 'pcv6105',
+    'pi6122', 'ti6112', 'ti6146', 'ti6126', 'axialDisplacement',
+    'vi6102', 'te6134', 'ctSuFan', 'ctSuPompa', 'ctSaFan', 'ctSaPompa',
     'kegiatanShift'
 ];
 
 // ============================================
-// 2. DATA STRUKTUR AREA
+// 2. STATE MANAGEMENT
 // ============================================
 
-// Struktur Area Turbine Logsheet
-const AREAS = {
-    "Steam Inlet Turbine": [
-        "MPS Inlet 30-TP-6101 PI-6114 (kg/cm2)", 
-        "MPS Inlet 30-TP-6101 TI-6153 (°C)", 
-        "MPS Inlet 30-TP-6101 PI-6116 (kg/cm2)", 
-        "LPS Extrac 30-TP-6101 PI-6123 (kg/cm2)", 
-        "Gland Steam TI-6156 (°C)", 
-        "MPS Inlet 30-TP-6101 PI-6108 (Kg/cm2)", 
-        "Exhaust Steam PI-6111 (kg/cm2)", 
-        "Gland Steam PI-6118 (Kg/cm2)"
-    ],
-    "Low Pressure Steam": [
-        "LPS from U-6101 PI-6104 (kg/cm2)", 
-        "LPS from U-6101 TI-6102 (°C)", 
-        "LPS Header PI-6106 (Kg/cm2)", 
-        "LPS Header TI-6107 (°C)"
-    ],
-    "Lube Oil": [
-        "Lube Oil 30-TK-6102 LI-6104 (%)", 
-        "Lube Oil 30-TK-6102 TI-6125 (°C)", 
-        "Lube Oil 30-C-6101 (On/Off)", 
-        "Lube Oil 30-EH-6102 (On/Off)", 
-        "Lube Oil Cartridge FI-6143 (%)", 
-        "Lube Oil Cartridge PI-6148 (mmH2O)", 
-        "Lube Oil Cartridge PI-6149 (mmH2O)", 
-        "Lube Oil PI-6145 (kg/cm2)", 
-        "Lube Oil E-6104 (A/B)", 
-        "Lube Oil TI-6127 (°C)", 
-        "Lube Oil FIL-6101 (A/B)", 
-        "Lube Oil PDI-6146 (Kg/cm2)", 
-        "Lube Oil PI-6143 (Kg/cm2)", 
-        "Lube Oil TI-6144 (°C)", 
-        "Lube Oil TI-6146 (°C)", 
-        "Lube Oil TI-6145 (°C)", 
-        "Lube Oil FG-6144 (%)", 
-        "Lube Oil FG-6146 (%)", 
-        "Lube Oil TI-6121 (°C)", 
-        "Lube Oil TI-6116 (°C)", 
-        "Lube Oil FG-6121 (%)", 
-        "Lube Oil FG-6116 (%)"
-    ],
-    "Control Oil": [
-        "Control Oil 30-TK-6103 LI-6106 (%)", 
-        "Control Oil 30-TK-6103 TI-6128 (°C)", 
-        "Control Oil P-6106 (A/B)", 
-        "Control Oil FIL-6103 (A/B)", 
-        "Control Oil PI-6152 (Bar)"
-    ],
-    "Shaft Line": [
-        "Jacking Oil 30-P-6105 PI-6158 (Bar)", 
-        "Jacking Oil 30-P-6105 PI-6161 (Bar)", 
-        "Electrical Turning Gear U-6103 (Remote/Running/Stop)", 
-        "EH-6101 (ON/OFF)"
-    ],
-    "Condenser 30-E-6102": [
-        "LG-6102 (%)", 
-        "30-P-6101 (A/B)", 
-        "30-P-6101 Suction (kg/cm2)", 
-        "30-P-6101 Discharge (kg/cm2)", 
-        "30-P-6101 Load (Ampere)"
-    ],
-    "Ejector": [
-        "J-6101 PI-6126 A (Kg/cm2)", 
-        "J-6101 PI-6127 B (Kg/cm2)", 
-        "J-6102 PI-6128 A (Kg/cm2)", 
-        "J-6102 PI-6129 B (Kg/cm2)", 
-        "J-6104 PI-6131 (Kg/cm2)", 
-        "J-6104 PI-6138 (Kg/cm2)", 
-        "PI-6172 (kg/cm2)", 
-        "LPS Extrac 30-TP-6101 TI-6155 (°C)", 
-        "from U-6102 TI-6104 (°C)"
-    ],
-    "Generator Cooling Water": [
-        "Air Cooler PI-6124 A (Kg/cm2)", 
-        "Air Cooler PI-6124 B (Kg/cm2)", 
-        "Air Cooler TI-6113 A (°C)", 
-        "Air Cooler TI-6113 B (°C)", 
-        "Air Cooler PI-6125 A (Kg/cm2)", 
-        "Air Cooler PI-6125 B (Kg/cm2)", 
-        "Air Cooler TI-6114 A (°C)", 
-        "Air Cooler TI-6114 B (°C)"
-    ],
-    "Condenser Cooling Water": [
-        "Condenser PI-6135 A (Kg/cm2)", 
-        "Condenser PI-6135 B (Kg/cm2)", 
-        "Condenser TI-6118 A (°C)", 
-        "Condenser TI-6118 B (°C)", 
-        "Condenser PI-6136 A (Kg/cm2)", 
-        "Condenser PI-6136 B (Kg/cm2)", 
-        "Condenser TI-6119 A (°C)", 
-        "Condenser TI-6119 B (°C)"
-    ],
-    "BFW System": [
-        "Condensate Tank TK-6201 (%)", 
-        "Condensate Tank TI-6216 (°C)", 
-        "P-6202 (A/B)", 
-        "P-6202 Suction (kg/cm2)", 
-        "P-6202 Discharge (kg/cm2)", 
-        "P-6202 Load (Ampere)", 
-        "Deaerator LI-6202 (%)", 
-        "Deaerator TI-6201 (°C)", 
-        "30-P-6201 (A/B)", 
-        "30-P-6201 Suction (kg/cm2)", 
-        "30-P-6201 Discharge (kg/cm2)", 
-        "30-P-6201 Load (Ampere)", 
-        "30-C-6202 A (ON/OFF)", 
-        "30-C-6202 A (Ampere)", 
-        "30-C-6202 B (ON/OFF)", 
-        "30-C-6202 B (Ampere)", 
-        "30-C-6202 PCV-6216 (%)", 
-        "30-C-6202 PI-6107 (kg/cm2)", 
-        "Condensate Drum 30-D-6201 LI-6209 (%)", 
-        "Condensate Drum 30-D-6201 PI-6218 (kg/cm2)", 
-        "Condensate Drum 30-D-6201 TI-6215 (°C)"
-    ],
-    "Chemical Dosing": [
-        "30-TK-6205 LI-6204 (%)", 
-        "30-TK-6205 30-P-6205 (A/B)", 
-        "30-TK-6205 Disch (kg/cm2)", 
-        "30-TK-6205 Stroke (%)", 
-        "30-TK-6206 LI-6206 (%)", 
-        "30-TK-6206 30-P-6206 (A/B)", 
-        "30-TK-6206 Disch (kg/cm2)", 
-        "30-TK-6206 Stroke (%)", 
-        "30-TK-6207 LI-6208 (%)", 
-        "30-TK-6207 30-P-6207 (A/B)", 
-        "30-TK-6207 Disch (kg/cm2)", 
-        "30-TK-6207 Stroke (%)"
-    ]
-};
-
-// Struktur Area CT Logsheet
-const AREAS_CT = {
-    "BASIN SA": [
-        "D-6511 LEVEL BASIN",
-        "D-6511 BLOWDOWN",
-        "D-6511 PH BASIN", 
-        "D-6511 TRASSAR (A/M)", 
-        "TK-6511 LEVEL ACID", 
-        "FIL-6511 (A/B)", 
-        "30-P-6511 A PRESS (kg/cm2)", 
-        "30-P-6511 B PRESS (kg/cm2)", 
-        "30-P-6511 C PRESS (kg/cm2)", 
-        "MT-6511 A STATUS", 
-        "MT-6511 B STATUS", 
-        "MT-6511 C STATUS", 
-        "MT-6511 D STATUS"
-    ], 
-    "BASIN SU": [
-        "D-6521 LEVEL BASIN",
-        "D-6521 BLOWDOWN",
-        "D-6521 PH BASIN", 
-        "D-6521 TRASSAR (A/M)", 
-        "TK-6521 LEVEL ACID", 
-        "FIL-6521 (A/B)", 
-        "30-P-6521 A PRESS (kg/cm2)", 
-        "30-P-6521 B PRESS (kg/cm2)", 
-        "30-P-6521 C PRESS (kg/cm2)", 
-        "MT-6521 A STATUS", 
-        "MT-6521 B STATUS", 
-        "MT-6521 C STATUS", 
-        "MT-6521 D STATUS"
-    ]
-};
-
-const INPUT_TYPES = {
-    PUMP_STATUS: {
-        patterns: ['(A/B)', '(ON/OFF)', '(On/Off)', '(Running/Stop)', '(Remote/Running/Stop)'],
-        options: {
-            '(A/B)': ['A', 'B'],
-            '(ON/OFF)': ['ON', 'OFF'],
-            '(On/Off)': ['On', 'Off'],
-            '(Running/Stop)': ['Running', 'Stop'],
-            '(Remote/Running/Stop)': ['Remote', 'Running', 'Stop']
-        }
-    }
-};
-
-// ============================================
-// 3. STATE MANAGEMENT
-// ============================================
-let lastData = {};
-let currentInput = {};
-let activeArea = "";
-let activeIdx = 0;
-let totalParams = 0;
-let currentInputType = 'text';
-let autoCloseTimer = null;
 let currentUser = null;
-let isAuthenticated = false;
 let usersCache = null;
-let activeTPMArea = '';
-let currentTPMPhoto = null;
-let currentTPMStatus = '';
-let currentShift = 3;
-let balancingAutoSaveInterval = null;
+let currentInput = {};
+let currentInputCT = {};
+let lastData = {};
+let lastDataCT = {};
+let activeArea = '';
+let activeIdx = 0;
+let activeAreaCT = '';
+let activeIdxCT = 0;
+let currentInputType = 'text';
+let currentInputTypeCT = 'text';
+let currentShift = 1;
 let uploadProgressInterval = null;
 let currentUploadController = null;
+let balancingAutoSaveInterval = null;
 let deferredPrompt = null;
 let installBannerShown = false;
 
-// CT State Variables
-let lastDataCT = {};
-let currentInputCT = {};
-let activeAreaCT = "";
-let activeIdxCT = 0;
-let totalParamsCT = 0;
-let currentInputTypeCT = 'text';
+// Photo state variables - NEW from v1.7.1
+let currentParamPhoto = null;
+let paramPhotos = {};
+let currentCTParamPhoto = null;
+let ctParamPhotos = {};
+
+// TPM State
+let activeTPMArea = '';
+let currentTPMPhoto = null;
+let currentTPMStatus = '';
 
 // ============================================
-// 4. INITIALIZATION & SERVICE WORKER
+// 3. INITIALIZATION
 // ============================================
 
-// Inisialisasi data dari localStorage
 function initState() {
     try {
         const savedDraft = localStorage.getItem(DRAFT_KEYS.LOGSHEET);
-        if (savedDraft) currentInput = JSON.parse(savedDraft);
+        if (savedDraft) {
+            try {
+                currentInput = JSON.parse(savedDraft);
+            } catch (e) {
+                currentInput = {};
+            }
+        }
         
         const savedCTDraft = localStorage.getItem(DRAFT_KEYS_CT.LOGSHEET);
-        if (savedCTDraft) currentInputCT = JSON.parse(savedCTDraft);
-        
-        totalParams = Object.values(AREAS).reduce((acc, arr) => acc + arr.length, 0);
-        totalParamsCT = Object.values(AREAS_CT).reduce((acc, arr) => acc + arr.length, 0);
-    } catch (e) {
-        console.error('Error loading state:', e);
-    }
-}
-
-// Register Service Worker untuk PWA
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register(`./sw.js?v=${APP_VERSION}`)
-            .then(registration => {
-                console.log('SW registered:', registration.scope);
-                registration.addEventListener('updatefound', () => {
-                    const newWorker = registration.installing;
-                    newWorker.addEventListener('statechange', () => {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            showUpdateAlert();
-                        }
-                    });
-                });
-            })
-            .catch(err => console.error('SW registration failed:', err));
-            
-        navigator.serviceWorker.addEventListener('message', event => {
-            if (event.data?.type === 'VERSION_CHECK' && event.data.version !== APP_VERSION) {
-                showUpdateAlert();
+        if (savedCTDraft) {
+            try {
+                currentInputCT = JSON.parse(savedCTDraft);
+            } catch (e) {
+                currentInputCT = {};
             }
-        });
-    });
-}
-
-// ============================================
-// 5. UTILITY FUNCTIONS
-// ============================================
-
-function showUpdateAlert() {
-    const updateAlert = document.getElementById('updateAlert');
-    if (updateAlert) updateAlert.classList.remove('hidden');
-}
-
-function applyUpdate() {
-    if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
-    }
-    window.location.reload();
-}
-
-function showCustomAlert(msg, type = 'success') {
-    const customAlert = document.getElementById('customAlert');
-    const alertContent = document.getElementById('alertContent');
-    const alertTitle = document.getElementById('alertTitle');
-    const alertMessage = document.getElementById('alertMessage');
-    const alertIconWrapper = document.getElementById('alertIconWrapper');
-    
-    if (!customAlert || !alertContent || !alertTitle || !alertMessage || !alertIconWrapper) {
-        console.error('Alert elements not found');
-        alert(msg);
-        return;
-    }
-    
-    if (autoCloseTimer) {
-        clearTimeout(autoCloseTimer);
-        autoCloseTimer = null;
-    }
-    
-    const titleMap = {
-        'success': 'Berhasil',
-        'error': 'Error',
-        'warning': 'Peringatan',
-        'info': 'Informasi'
-    };
-    
-    alertTitle.textContent = titleMap[type] || 'Informasi';
-    alertMessage.innerText = msg;
-    alertContent.className = 'alert-content ' + type;
-    
-    // Set icon berdasarkan tipe
-    const icons = {
-        success: `<div class="alert-icon-bg"></div><svg class="alert-icon-svg" viewBox="0 0 52 52"><circle cx="26" cy="26" r="25"/><path d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>`,
-        error: `<div class="alert-icon-bg" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"></div><svg class="alert-icon-svg" viewBox="0 0 52 52" style="stroke: #ef4444"><circle cx="26" cy="26" r="25"/><path d="M16 16 L36 36 M36 16 L16 36"/></svg>`,
-        warning: `<div class="alert-icon-bg" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"></div><svg class="alert-icon-svg" viewBox="0 0 52 52" style="stroke: #f59e0b"><circle cx="26" cy="26" r="25"/><path d="M26 10 L26 30 M26 34 L26 38"/></svg>`,
-        info: `<div class="alert-icon-bg" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)"></div><svg class="alert-icon-svg" viewBox="0 0 52 52" style="stroke: #3b82f6"><circle cx="26" cy="26" r="25"/><path d="M26 10 L26 30 M26 34 L26 36"/></svg>`
-    };
-    
-    alertIconWrapper.innerHTML = icons[type] || icons.info;
-    customAlert.classList.remove('hidden');
-    
-    if (type === 'success' || type === 'info') {
-        autoCloseTimer = setTimeout(() => {
-            if (!customAlert.classList.contains('hidden')) closeAlert();
-        }, 3000);
-    }
-}
-
-function closeAlert() {
-    const customAlert = document.getElementById('customAlert');
-    if (customAlert) customAlert.classList.add('hidden');
-    if (autoCloseTimer) {
-        clearTimeout(autoCloseTimer);
-        autoCloseTimer = null;
-    }
-}
-
-function navigateTo(screenId) {
-    const protectedScreens = ['homeScreen', 'areaListScreen', 'paramScreen', 'tpmScreen', 'tpmInputScreen', 'balancingScreen', 'ctAreaListScreen', 'ctParamScreen'];
-    
-    if (protectedScreens.includes(screenId) && !requireAuth()) {
-        return;
-    }
-    
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    
-    const targetScreen = document.getElementById(screenId);
-    if (targetScreen) {
-        targetScreen.classList.add('active');
-        window.scrollTo(0, 0);
-        
-        // Screen-specific initialization
-        if (screenId === 'homeScreen') {
-            loadUserStats();
-            setTimeout(() => {
-                addAdminButton();           
-                addChangePasswordButton();  
-            }, 100);
-        } else if (screenId === 'areaListScreen') {
-            fetchLastData();
-            updateOverallProgress();
-        } else if (screenId === 'balancingScreen') {
-            initBalancingScreen();
-        } else if (screenId === 'ctAreaListScreen') {
-            fetchLastDataCT();
-            updateCTOverallProgress();
         }
+        
+        // Load photo drafts - NEW from v1.7.1
+        loadParamPhotosFromDraft();
+        loadCTParamPhotosFromDraft();
+    } catch (e) {
+        console.error('Error in initState:', e);
+        currentInput = {};
+        currentInputCT = {};
+        paramPhotos = {};
+        ctParamPhotos = {};
     }
-}
-
-function requireAuth() {
-    if (!isAuthenticated || !isSessionValid(getSession())) {
-        clearSession();
-        showLoginScreen();
-        showCustomAlert('Sesi Anda telah berakhir. Silakan login kembali.', 'error');
-        return false;
-    }
-    return true;
-}
-
-function isAdmin() {
-    return currentUser && currentUser.role === 'admin';
 }
 
 // ============================================
-// 6. AUTHENTICATION SYSTEM
+// 4. AUTHENTICATION
 // ============================================
 
 function initAuth() {
-    const session = getSession();
-    
-    if (session && isSessionValid(session)) {
-        currentUser = session.user;
-        isAuthenticated = true;
-        updateUIForAuthenticatedUser();
-        
-        const loginScreen = document.getElementById('loginScreen');
-        if (loginScreen && loginScreen.classList.contains('active')) {
-            navigateTo('homeScreen');
-        }
-    } else {
-        clearSession();
-        showLoginScreen();
-    }
-    
-    loadUsersCache();
-}
-
-function isSessionValid(session) {
-    if (!session || !session.expiresAt) return false;
-    return Date.now() < session.expiresAt;
-}
-
-function saveSession(user, rememberMe = false) {
-    const duration = rememberMe ? AUTH_CONFIG.REMEMBER_ME_DURATION : AUTH_CONFIG.SESSION_DURATION;
-    const session = {
-        user: user,
-        loginTime: Date.now(),
-        expiresAt: Date.now() + duration,
-        rememberMe: rememberMe
-    };
-    
     try {
-        localStorage.setItem(AUTH_CONFIG.SESSION_KEY, JSON.stringify(session));
+        const session = getSession();
+        if (session && session.user) {
+            const now = Date.now();
+            if (now < session.expiresAt) {
+                currentUser = session.user;
+                showMainApp();
+                return;
+            } else {
+                clearSession();
+            }
+        }
+        showLoginScreen();
     } catch (e) {
-        console.error('Error saving session:', e);
+        console.error('Error in initAuth:', e);
+        showLoginScreen();
     }
 }
 
 function getSession() {
     try {
-        const sessionData = localStorage.getItem(AUTH_CONFIG.SESSION_KEY);
-        return sessionData ? JSON.parse(sessionData) : null;
+        return JSON.parse(localStorage.getItem(AUTH_CONFIG.SESSION_KEY));
     } catch (e) {
         return null;
     }
 }
 
+function saveSession(user) {
+    const session = {
+        user: user,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + AUTH_CONFIG.SESSION_DURATION
+    };
+    localStorage.setItem(AUTH_CONFIG.SESSION_KEY, JSON.stringify(session));
+}
+
 function clearSession() {
     localStorage.removeItem(AUTH_CONFIG.SESSION_KEY);
-    localStorage.removeItem(AUTH_CONFIG.USER_KEY);
 }
 
 function showLoginScreen() {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    const loginScreen = document.getElementById('loginScreen');
-    if (loginScreen) loginScreen.classList.add('active');
+    navigateTo('loginScreen');
+}
+
+function showMainApp() {
+    navigateTo('homeScreen');
+    updateUserInfo();
+    fetchLastData();
+    fetchLastDataCT();
+}
+
+function updateUserInfo() {
+    const userName = document.getElementById('userName');
+    const userRole = document.getElementById('userRole');
+    const headerUserName = document.getElementById('headerUserName');
     
-    const savedUser = localStorage.getItem(AUTH_CONFIG.USER_KEY);
-    if (savedUser) {
-        try {
-            const user = JSON.parse(savedUser);
-            const usernameInput = document.getElementById('operatorUsername');
-            if (usernameInput && user.username) {
-                usernameInput.value = user.username;
-                document.getElementById('operatorPassword')?.focus();
-            }
-        } catch (e) {
-            console.error('Error parsing saved user:', e);
-        }
+    if (currentUser) {
+        if (userName) userName.textContent = currentUser.name || currentUser.username;
+        if (userRole) userRole.textContent = currentUser.role === 'admin' ? 'Administrator' : 'Operator';
+        if (headerUserName) headerUserName.textContent = currentUser.name || currentUser.username;
     }
 }
 
-async function loginOperator() {
-    const usernameInput = document.getElementById('operatorUsername');
-    const passwordInput = document.getElementById('operatorPassword');
-    const loginBtn = document.querySelector('#loginScreen .btn-primary');
-    
-    if (!usernameInput || !passwordInput) return;
-    
-    const username = String(usernameInput.value).trim().toLowerCase();
-    const password = String(passwordInput.value).trim();
-    
-    if (!username || !password) {
-        showLoginError('Username dan password wajib diisi!');
-        return;
+function requireAuth() {
+    if (!currentUser) {
+        showCustomAlert('Silakan login terlebih dahulu', 'error');
+        showLoginScreen();
+        return false;
     }
-    
-    if (loginBtn) {
-        loginBtn.disabled = true;
-        loginBtn.innerHTML = '<span>⏳ Memverifikasi...</span>';
-    }
-    
-    hideLoginError();
-    
-    let onlineSuccess = false;
-    
-    // Coba login online dulu
-    if (navigator.onLine) {
-        try {
-            const result = await validateUserOnline(username, password);
-            
-            if (result.success) {
-                onlineSuccess = true;
-                updateUserCache(username, password, result.user);
-                handleLoginSuccess(result.user, username, password, false);
-                return;
-            }
-        } catch (error) {
-            console.log('Online login failed, trying offline...', error);
-        }
-    }
-    
-    // Jika online gagal atau offline, coba dari cache/legacy
-    const offlineResult = validateUserOffline(username, password);
-    
-    if (offlineResult.success) {
-        handleLoginSuccess(offlineResult.user, username, password, true);
-        showCustomAlert(navigator.onLine ? 'Login offline berhasil! (Mode Local)' : 'Login offline (tidak ada koneksi)', navigator.onLine ? 'warning' : 'info');
-    } else {
-        showLoginError(offlineResult.error || 'Login gagal. Periksa koneksi atau username/password.');
-        if (loginBtn) {
-            loginBtn.disabled = false;
-            loginBtn.innerHTML = '<span>🔓 Masuk</span>';
-        }
-    }
-}
-
-function validateUserOnline(username, password) {
-    return new Promise((resolve, reject) => {
-        const callbackName = 'loginCallback_' + Date.now();
-        const timeout = setTimeout(() => {
-            reject(new Error('Timeout'));
-        }, 10000);
-        
-        window[callbackName] = (response) => {
-            clearTimeout(timeout);
-            cleanupJSONP(callbackName);
-            resolve(response);
-        };
-        
-        const script = document.createElement('script');
-        script.src = `${GAS_URL}?action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&callback=${callbackName}`;
-        
-        script.onerror = () => {
-            clearTimeout(timeout);
-            cleanupJSONP(callbackName);
-            reject(new Error('Network error'));
-        };
-        
-        document.body.appendChild(script);
-    });
-}
-
-function validateUserOffline(username, password) {
-    username = username.toLowerCase().trim();
-    
-    const cachedUsers = loadUsersCache();
-    if (cachedUsers && cachedUsers[username]) {
-        const user = cachedUsers[username];
-        if (user.password === password) {
-            if (user.status === 'INACTIVE') {
-                return { success: false, error: 'User tidak aktif' };
-            }
-            return { 
-                success: true, 
-                user: {
-                    username: user.username,
-                    name: user.name,
-                    role: user.role,
-                    department: user.department
-                }
-            };
-        }
-        return { success: false, error: 'Password salah' };
-    }
-    
-    const legacyUser = OFFLINE_USERS[username];
-    if (!legacyUser) {
-        return { success: false, error: 'User tidak ditemukan' };
-    }
-    
-    if (legacyUser.password !== password) {
-        return { success: false, error: 'Password salah' };
-    }
-    
-    return { 
-        success: true, 
-        user: {
-            username: username,
-            name: legacyUser.name,
-            role: legacyUser.role,
-            department: legacyUser.department
-        }
-    };
-}
-
-function handleLoginSuccess(userData, username, password, isOffline = false) {
-    currentUser = {
-        username: userData.username,
-        name: userData.name,
-        role: userData.role,
-        department: userData.department,
-        id: 'OP-' + Date.now().toString(36).toUpperCase(),
-        loginTime: new Date().toISOString(),
-        isOffline: isOffline
-    };
-    
-    isAuthenticated = true;
-    
-    saveSession(currentUser, false);
-    localStorage.setItem(AUTH_CONFIG.USER_KEY, JSON.stringify(currentUser));
-    
-    if (!isOffline) {
-        updateUserCache(username, password, userData);
-    }
-    
-    const loginBtn = document.querySelector('#loginScreen .btn-primary');
-    if (loginBtn) loginBtn.innerHTML = '<span>✓ Berhasil!</span>';
-    
-    showCustomAlert(`Selamat datang, ${userData.name}!`, 'success');
-    
-    setTimeout(() => {
-        updateUIForAuthenticatedUser();
-        navigateTo('homeScreen');
-        
-        if (loginBtn) {
-            loginBtn.disabled = false;
-            loginBtn.innerHTML = '<span>🔓 Masuk</span>';
-        }
-        
-        // PERBAIKAN: Deklarasikan variabel passwordInput sebelum digunakan
-        const passwordInput = document.getElementById('operatorPassword');
-        if (passwordInput) passwordInput.value = '';
-        
-        // Trigger sync untuk admin setelah login berhasil
-        if (!isOffline && userData.role === 'admin') {
-            setTimeout(syncUsersForOffline, 2000);
-        }
-    }, 800);
+    return true;
 }
 
 function logoutOperator() {
-    if (confirm('Apakah Anda yakin ingin keluar?')) {
-        if (Object.keys(currentInput).length > 0) {
-            localStorage.setItem(DRAFT_KEYS.LOGSHEET_BACKUP, JSON.stringify(currentInput));
+    clearSession();
+    currentUser = null;
+    showLoginScreen();
+    showCustomAlert('Berhasil logout', 'success');
+}
+
+// ============================================
+// 5. NAVIGATION
+// ============================================
+
+function navigateTo(screenId) {
+    document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+    });
+    
+    const targetScreen = document.getElementById(screenId);
+    if (targetScreen) {
+        targetScreen.classList.add('active');
+    }
+    
+    if (screenId === 'logsheetScreen') {
+        renderMenu();
+    } else if (screenId === 'ctLogsheetScreen') {
+        renderCTMenu();
+    } else if (screenId === 'tpmScreen') {
+        renderTPMAreas();
+    } else if (screenId === 'balancingScreen') {
+        initBalancingScreen();
+    }
+}
+
+function goBackToHome() {
+    navigateTo('homeScreen');
+}
+
+// ============================================
+// 6. UI COMPONENTS
+// ============================================
+
+function showCustomAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `custom-alert ${type}`;
+    alertDiv.innerHTML = `
+        <div class="alert-content">
+            <span class="alert-icon">${type === 'success' ? 'âœ“' : type === 'error' ? 'âœ—' : type === 'warning' ? 'âš ' : 'â„¹'}</span>
+            <span class="alert-message">${message}</span>
+        </div>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.classList.add('show');
+    }, 10);
+    
+    setTimeout(() => {
+        alertDiv.classList.remove('show');
+        setTimeout(() => alertDiv.remove(), 300);
+    }, 3000);
+}
+
+function showLoginError(message) {
+    const errorDiv = document.getElementById('loginError');
+    if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+    }
+}
+
+function hideLoginError() {
+    const errorDiv = document.getElementById('loginError');
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+    }
+}
+
+// ============================================
+// 7. LOGIN FUNCTION
+// ============================================
+
+async function loginOperator() {
+    const username = document.getElementById('operatorUsername')?.value.trim().toLowerCase();
+    const password = document.getElementById('operatorPassword')?.value;
+    
+    if (!username || !password) {
+        showLoginError('Username dan password wajib diisi');
+        return;
+    }
+    
+    const loginBtn = document.getElementById('loginBtn');
+    if (loginBtn) {
+        loginBtn.textContent = 'â³ Memverifikasi...';
+        loginBtn.disabled = true;
+    }
+    
+    try {
+        const result = await verifyCredentials(username, password);
+        
+        if (result.success) {
+            currentUser = result.user;
+            saveSession(currentUser);
+            hideLoginError();
+            showMainApp();
+            showCustomAlert(`Selamat datang, ${currentUser.name || currentUser.username}!`, 'success');
+            
+            if (currentUser.role === 'admin') {
+                syncUsersForOffline();
+            }
+        } else {
+            showLoginError(result.error || 'Username atau password salah');
         }
+    } catch (error) {
+        console.error('Login error:', error);
+        showLoginError('Terjadi kesalahan. Coba lagi.');
+    } finally {
+        if (loginBtn) {
+            loginBtn.textContent = 'Login';
+            loginBtn.disabled = false;
+        }
+    }
+}
+
+async function verifyCredentials(username, password) {
+    const cachedUser = checkUsersCache(username, password);
+    if (cachedUser) {
+        return { success: true, user: cachedUser };
+    }
+    
+    if (!navigator.onLine) {
+        return { success: false, error: 'Mode offline. Gunakan akun yang pernah login.' };
+    }
+    
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
         
-        clearSession();
-        currentUser = null;
-        isAuthenticated = false;
+        const response = await fetch(GAS_URL, {
+            method: 'POST',
+            signal: controller.signal,
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'AUTH',
+                username: username,
+                password: password
+            })
+        });
         
-        const usernameInput = document.getElementById('operatorUsername');
-        const passwordInput = document.getElementById('operatorPassword');
-        if (usernameInput) usernameInput.value = '';
-        if (passwordInput) passwordInput.value = '';
+        clearTimeout(timeoutId);
         
-        const adminBtn = document.getElementById('adminPanelBtn');
-        if (adminBtn) adminBtn.remove();
+        return new Promise((resolve) => {
+            const callbackName = 'authCallback_' + Date.now();
+            
+            window[callbackName] = (response) => {
+                cleanupJSONP(callbackName);
+                if (response.success) {
+                    updateUserCache(response.user.username, password, response.user);
+                    resolve({ success: true, user: response.user });
+                } else {
+                    resolve({ success: false, error: response.error || 'Login gagal' });
+                }
+            };
+            
+            const script = document.createElement('script');
+            script.src = `${GAS_URL}?action=auth&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&callback=${callbackName}`;
+            
+            script.onerror = () => {
+                cleanupJSONP(callbackName);
+                resolve({ success: false, error: 'Network error' });
+            };
+            
+            document.body.appendChild(script);
+            
+            setTimeout(() => {
+                cleanupJSONP(callbackName);
+                resolve({ success: false, error: 'Timeout' });
+            }, 10000);
+        });
         
-        const cpBtn = document.getElementById('changePasswordBtn');
-        if (cpBtn) cpBtn.remove();
+    } catch (error) {
+        return { success: false, error: 'Network error: ' + error.message };
+    }
+}
+
+function checkUsersCache(username, password) {
+    try {
+        const cache = JSON.parse(localStorage.getItem(AUTH_CONFIG.USERS_CACHE_KEY) || '{}');
+        const user = cache[username.toLowerCase()];
         
-        showLoginScreen();
-        showCustomAlert('Anda telah keluar dari sistem.', 'success');
+        if (user && user.password === password && user.status === 'ACTIVE') {
+            return user;
+        }
+        return null;
+    } catch (e) {
+        return null;
     }
 }
 
 function updateUserCache(username, password, userData) {
     try {
-        let cache = loadUsersCache() || {};
-        
+        const cache = JSON.parse(localStorage.getItem(AUTH_CONFIG.USERS_CACHE_KEY) || '{}');
         cache[username.toLowerCase()] = {
-            username: userData.username || username,
+            ...userData,
             password: password,
-            role: userData.role || 'operator',
-            name: userData.name || username,
-            department: userData.department || 'Unit Utilitas 3B',
-            status: 'ACTIVE',
             lastSync: new Date().toISOString()
         };
-        
         localStorage.setItem(AUTH_CONFIG.USERS_CACHE_KEY, JSON.stringify(cache));
-        usersCache = cache;
-        console.log('User cached for offline:', username);
     } catch (e) {
-        console.error('Error saving cache:', e);
+        console.error('Error updating user cache:', e);
     }
 }
+
 function updatePasswordInCache(username, newPassword) {
-    if (!username) return;
-    
-    const cache = loadUsersCache() || {};
-    const key = String(username).toLowerCase();
-    
-    if (cache[key]) {
-        cache[key].password = newPassword;
-        cache[key].lastSync = new Date().toISOString();
-        localStorage.setItem(AUTH_CONFIG.USERS_CACHE_KEY, JSON.stringify(cache));
-        usersCache = cache;
-        console.log('Password updated in cache for:', username);
-    }
-}
-function loadUsersCache() {
-    if (usersCache) return usersCache;
     try {
-        const cache = localStorage.getItem(AUTH_CONFIG.USERS_CACHE_KEY);
-        usersCache = cache ? JSON.parse(cache) : null;
-        return usersCache;
+        const cache = JSON.parse(localStorage.getItem(AUTH_CONFIG.USERS_CACHE_KEY) || '{}');
+        if (cache[username.toLowerCase()]) {
+            cache[username.toLowerCase()].password = newPassword;
+            cache[username.toLowerCase()].lastSync = new Date().toISOString();
+            localStorage.setItem(AUTH_CONFIG.USERS_CACHE_KEY, JSON.stringify(cache));
+        }
     } catch (e) {
-        return null;
-    }
-}
-
-function showLoginError(message) {
-    const errorMsg = document.getElementById('loginError');
-    const usernameInput = document.getElementById('operatorUsername');
-    const passwordInput = document.getElementById('operatorPassword');
-    
-    if (errorMsg) {
-        errorMsg.textContent = message;
-        errorMsg.style.display = 'block';
-        errorMsg.style.color = '#ef4444';
-        errorMsg.style.fontSize = '0.875rem';
-        errorMsg.style.marginTop = '8px';
-        errorMsg.style.textAlign = 'center';
-        errorMsg.style.padding = '8px';
-        errorMsg.style.background = 'rgba(239, 68, 68, 0.1)';
-        errorMsg.style.borderRadius = '8px';
-        errorMsg.style.border = '1px solid rgba(239, 68, 68, 0.2)';
-    }
-    
-    if (usernameInput) usernameInput.style.borderColor = '#ef4444';
-    if (passwordInput) passwordInput.style.borderColor = '#ef4444';
-}
-
-function hideLoginError() {
-    const errorMsg = document.getElementById('loginError');
-    const usernameInput = document.getElementById('operatorUsername');
-    const passwordInput = document.getElementById('operatorPassword');
-    
-    if (errorMsg) {
-        errorMsg.style.display = 'none';
-        errorMsg.textContent = '';
-    }
-    
-    if (usernameInput) usernameInput.style.borderColor = '';
-    if (passwordInput) passwordInput.style.borderColor = '';
-}
-
-function updateUIForAuthenticatedUser() {
-    if (!currentUser) return;
-    
-    const userElements = [
-        'displayUserName', 'tpmHeaderUser', 'tpmInputUser', 
-        'areaListUser', 'paramUser', 'balancingUser', 
-        'ctAreaListUser', 'ctParamUser'
-    ];
-    
-    userElements.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = currentUser.name || currentUser.username;
-    });
-    
-    if (currentUser.role === 'admin') {
-        const homeHeader = document.querySelector('.home-header .user-info');
-        if (homeHeader && !homeHeader.querySelector('.admin-badge')) {
-            const badge = document.createElement('span');
-            badge.className = 'admin-badge';
-            badge.style.cssText = 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.65rem; font-weight: 700; margin-left: 4px; text-transform: uppercase;';
-            badge.textContent = 'Admin';
-            homeHeader.appendChild(badge);
-        }
-        setTimeout(addAdminButton, 100);
-    }
-}
-
-function togglePasswordVisibility() {
-    const passwordInput = document.getElementById('operatorPassword');
-    const eyeIcon = document.getElementById('eyeIcon');
-    
-    if (!passwordInput) return;
-    
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        if (eyeIcon) {
-            eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
-        }
-    } else {
-        passwordInput.type = 'password';
-        if (eyeIcon) {
-            eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
-        }
+        console.error('Error updating password in cache:', e);
     }
 }
 
 // ============================================
-// 7. USER MANAGEMENT (ADMIN ONLY)
+// 8. USER MANAGEMENT (Admin Only)
 // ============================================
-
-function addAdminButton() {
-    if (!isAdmin()) return;
-    if (document.getElementById('adminPanelBtn')) return;
-    
-    const menuGrid = document.querySelector('.menu-grid');
-    if (!menuGrid) return;
-    
-    const adminCard = document.createElement('div');
-    adminCard.className = 'menu-card danger';
-    adminCard.id = 'adminPanelBtn';
-    adminCard.style.cssText = 'border-left: 4px solid #ef4444; margin-top: 12px; cursor: pointer;';
-    adminCard.onclick = showUserManagement;
-    
-    adminCard.innerHTML = `
-        <div class="menu-icon" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-            </svg>
-        </div>
-        <div class="menu-content">
-            <h3>Manajemen User</h3>
-            <p>Tambah/Edit/Hapus Operator</p>
-        </div>
-    `;
-    
-    menuGrid.appendChild(adminCard);
-}
-
-function addChangePasswordButton() {
-    const menuGrid = document.querySelector('.menu-grid');
-    if (!menuGrid || document.getElementById('changePasswordBtn')) return;
-    
-    const btn = document.createElement('div');
-    btn.id = 'changePasswordBtn';
-    btn.className = 'menu-card';
-    btn.style.cssText = 'border-left: 4px solid #f59e0b; cursor: pointer; margin-top: 12px;';
-    btn.onclick = showChangePasswordModal;
-    
-    btn.innerHTML = `
-        <div class="menu-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                <circle cx="12" cy="16" r="1"/>
-            </svg>
-        </div>
-        <div class="menu-content">
-            <h3>Ganti Password</h3>
-            <p>Ubah password akun Anda</p>
-        </div>
-    `;
-    
-    menuGrid.appendChild(btn);
-}
 
 function showUserManagement() {
-    if (!isAdmin()) {
-        showCustomAlert('Akses ditolak. Hanya admin yang bisa mengakses.', 'error');
+    if (!currentUser || currentUser.role !== 'admin') {
+        showCustomAlert('Hanya admin yang dapat mengakses fitur ini', 'error');
         return;
     }
     
-    const modal = document.createElement('div');
-    modal.id = 'userManagementModal';
-    modal.style.cssText = 'position: fixed; inset: 0; background: rgba(15, 23, 42, 0.98); z-index: 10003; overflow-y: auto; padding: 20px;';
-    
-    modal.innerHTML = `
-        <div style="max-width: 480px; margin: 0 auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 16px; background: rgba(30, 41, 59, 0.8); border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.2);">
-                <h2 style="margin: 0; font-size: 1.25rem;">👥 Manajemen User</h2>
-                <button onclick="closeUserManagement()" style="background: none; border: none; color: #94a3b8; cursor: pointer; padding: 8px;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-            
-            <div id="userListContainer" style="margin-bottom: 20px;">
-                <div style="text-align: center; padding: 40px; color: #64748b;">
-                    ⏳ Memuat data user...
-                </div>
-            </div>
-            
-            <button onclick="showAddUserForm()" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                Tambah User Baru
-            </button>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    document.body.style.overflow = 'hidden';
-    loadUserList();
+    const modal = document.getElementById('userManagementModal');
+    if (modal) {
+        loadUserList();
+        modal.classList.remove('hidden');
+    }
 }
 
 function closeUserManagement() {
     const modal = document.getElementById('userManagementModal');
     if (modal) {
-        modal.remove();
-        document.body.style.overflow = '';
+        modal.classList.add('hidden');
     }
 }
 
@@ -957,44 +538,35 @@ async function loadUserList() {
     const container = document.getElementById('userListContainer');
     if (!container) return;
     
+    container.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="spinner"></div><p>Memuat data user...</p></div>';
+    
     try {
-        const result = await fetchUsersFromServer();
-        
-        if (result.success) {
-            renderUserList(result.users);
-            updateUsersCache(result.users);
-        } else {
-            throw new Error(result.error);
-        }
+        const users = await fetchUsersFromServer();
+        renderUserList(users);
     } catch (error) {
-        const cached = loadUsersCache();
-        if (cached) {
-            const usersArray = Object.values(cached);
-            renderUserList(usersArray);
-            container.insertAdjacentHTML('afterbegin', `
-                <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 0.875rem; color: #f59e0b;">
-                    ⚠️ Mode offline - Menampilkan data dari cache
-                </div>
-            `);
+        const cache = loadUsersCache();
+        if (cache) {
+            const users = Object.values(cache);
+            renderUserList(users);
+            showCustomAlert('Menggunakan data cache (mode offline)', 'warning');
         } else {
-            container.innerHTML = `
-                <div style="text-align: center; padding: 40px; color: #ef4444;">
-                    ❌ Gagal memuat data user<br>
-                    <small style="color: #64748b;">${error.message}</small>
-                </div>
-            `;
+            container.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">Gagal memuat data user</div>';
         }
     }
 }
 
-function fetchUsersFromServer() {
+function loadUsersCache() {
+    try {
+        return JSON.parse(localStorage.getItem(AUTH_CONFIG.USERS_CACHE_KEY) || '{}');
+    } catch (e) {
+        return null;
+    }
+}
+
+async function fetchUsersFromServer() {
     return new Promise((resolve, reject) => {
-        if (!currentUser || !currentUser.username) {
-            reject(new Error('Tidak ada user yang login'));
-            return;
-        }
-        
         const callbackName = 'usersCallback_' + Date.now();
+        
         const timeout = setTimeout(() => {
             cleanupJSONP(callbackName);
             reject(new Error('Timeout'));
@@ -1028,7 +600,7 @@ function renderUserList(users) {
     if (validUsers.length === 0) {
         container.innerHTML = `
             <div style="text-align: center; padding: 40px; color: #ef4444;">
-                ❌ Tidak ada data user valid<br>
+                âŒ Tidak ada data user valid<br>
                 <small style="color: #64748b;">Pastikan sheet USERS memiliki kolom yang benar</small>
             </div>
         `;
@@ -1051,7 +623,7 @@ function renderUserList(users) {
                             ${isCurrentUser ? '<span style="font-size: 0.7rem; background: rgba(14, 165, 233, 0.2); color: #38bdf8; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">Anda</span>' : ''}
                         </div>
                         <div style="font-size: 0.875rem; color: #94a3b8; margin-top: 2px;">
-                            @${user.username} • ${user.department || 'Unit Utilitas 3B'}
+                            @${user.username} â€¢ ${user.department || 'Unit Utilitas 3B'}
                         </div>
                     </div>
                     <div style="display: flex; gap: 4px;">
@@ -1065,17 +637,17 @@ function renderUserList(users) {
                 </div>
                 
                 <div style="background: rgba(239, 68, 68, 0.05); border: 1px dashed rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                    <div style="font-size: 0.75rem; color: #ef4444; margin-bottom: 4px; font-weight: 600;">🔓 Password:</div>
+                    <div style="font-size: 0.75rem; color: #ef4444; margin-bottom: 4px; font-weight: 600;">ðŸ”“ Password:</div>
                     <div style="font-family: monospace; font-size: 0.875rem; color: #f87171; letter-spacing: 1px;">${user.password || 'N/A'}</div>
                 </div>
                 
                 <div style="display: flex; gap: 8px;">
                     ${!isCurrentUser ? `
                         <button onclick="toggleUserStatus('${user.username}')" style="flex: 1; padding: 10px; background: ${isActive ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)'}; color: ${isActive ? '#ef4444' : '#10b981'}; border: 1px solid ${isActive ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}; border-radius: 8px; font-size: 0.875rem; cursor: pointer;">
-                            ${isActive ? '🔒 Nonaktifkan' : '🔓 Aktifkan'}
+                            ${isActive ? 'ðŸ”’ Nonaktifkan' : 'ðŸ”“ Aktifkan'}
                         </button>
                         <button onclick="deleteUser('${user.username}')" style="padding: 10px 16px; background: rgba(100, 116, 139, 0.1); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.3); border-radius: 8px; font-size: 0.875rem; cursor: pointer;">
-                            🗑️
+                            ðŸ—‘ï¸
                         </button>
                     ` : '<div style="flex: 1; text-align: center; color: #64748b; font-size: 0.875rem; padding: 10px;">Tidak dapat mengedit diri sendiri</div>'}
                 </div>
@@ -1121,7 +693,7 @@ function showAddUserForm() {
     modal.innerHTML = `
         <div style="max-width: 480px; margin: 0 auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 16px; background: rgba(30, 41, 59, 0.8); border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.2);">
-                <h2 style="margin: 0; font-size: 1.25rem;">➕ Tambah User Baru</h2>
+                <h2 style="margin: 0; font-size: 1.25rem;">âž• Tambah User Baru</h2>
                 <button onclick="restoreUserManagement()" style="background: none; border: none; color: #94a3b8; cursor: pointer; padding: 8px;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -1139,7 +711,7 @@ function showAddUserForm() {
                 <div>
                     <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 6px;">Password (Plaintext) *</label>
                     <input type="text" id="newPassword" required style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 8px; color: white; font-size: 1rem;">
-                    <small style="color: #64748b; font-size: 0.75rem;">⚠️ Password akan disimpan dalam bentuk plaintext</small>
+                    <small style="color: #64748b; font-size: 0.75rem;">âš ï¸ Password akan disimpan dalam bentuk plaintext</small>
                 </div>
                 
                 <div>
@@ -1319,15 +891,10 @@ async function deleteUser(username) {
 }
 
 // ============================================
-// 8. SYNC & OFFLINE SUPPORT
+// 9. SYNC & OFFLINE SUPPORT
 // ============================================
 
-/**
- * Sinkronisasi data users untuk mode offline
- * Hanya dijalankan untuk admin saat login online berhasil
- */
 async function syncUsersForOffline() {
-    // Validasi kondisi
     if (!navigator.onLine) {
         console.log('Sync skipped: Device is offline');
         return;
@@ -1346,19 +913,17 @@ async function syncUsersForOffline() {
     console.log('[SYNC] Starting offline users sync for admin...');
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 detik timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
     
     try {
         const callbackName = 'syncUsersCallback_' + Date.now();
         
         const result = await new Promise((resolve, reject) => {
-            // Cleanup function
             const cleanup = () => {
                 clearTimeout(timeoutId);
                 if (window[callbackName]) delete window[callbackName];
             };
             
-            // Setup callback
             window[callbackName] = (response) => {
                 cleanup();
                 if (response && response.success && Array.isArray(response.users)) {
@@ -1368,7 +933,6 @@ async function syncUsersForOffline() {
                 }
             };
             
-            // Create script tag
             const script = document.createElement('script');
             script.src = `${GAS_URL}?action=getUsers&adminUser=${encodeURIComponent(currentUser.username)}&adminPass=admin123&callback=${callbackName}`;
             
@@ -1377,7 +941,6 @@ async function syncUsersForOffline() {
                 reject(new Error('Failed to load script'));
             };
             
-            // Abort handling
             controller.signal.addEventListener('abort', () => {
                 cleanup();
                 reject(new Error('Sync aborted'));
@@ -1385,7 +948,6 @@ async function syncUsersForOffline() {
             
             document.body.appendChild(script);
             
-            // Auto cleanup script DOM after load
             script.onload = () => {
                 setTimeout(() => {
                     if (script.parentNode) script.remove();
@@ -1393,30 +955,21 @@ async function syncUsersForOffline() {
             };
         });
         
-        // Update cache dengan data fresh dari server
         if (result.users.length > 0) {
             updateUsersCache(result.users);
             console.log(`[SYNC] Success: ${result.users.length} users cached for offline mode`);
-            
-            // Optional: Silent notification (bisa diaktifkan jika perlu)
-            // showCustomAlert(`✓ ${result.users.length} users synced`, 'success');
         } else {
             console.log('[SYNC] No users returned from server');
         }
         
     } catch (error) {
         console.error('[SYNC] Failed:', error.message);
-        // Tidak perlu alert agar tidak ganggu UX, cache lama masih valid
     } finally {
         clearTimeout(timeoutId);
     }
 }
 
-/**
- * Helper untuk cleanup JSONP callback dan script tags
- */
 function cleanupJSONP(callbackName) {
-    // Hapus global callback
     if (window[callbackName]) {
         try {
             delete window[callbackName];
@@ -1425,7 +978,6 @@ function cleanupJSONP(callbackName) {
         }
     }
     
-    // Hapus script tag yang terkait (best effort)
     const scripts = document.querySelectorAll('script');
     scripts.forEach(script => {
         if (script.src && script.src.includes('callback=' + callbackName)) {
@@ -1435,7 +987,7 @@ function cleanupJSONP(callbackName) {
 }
 
 // ============================================
-// 9. CHANGE PASSWORD FUNCTIONS
+// 10. CHANGE PASSWORD FUNCTIONS
 // ============================================
 
 function showChangePasswordModal() {
@@ -1451,7 +1003,6 @@ function showChangePasswordModal() {
     
     if (usernameSpan) usernameSpan.textContent = currentUser.username;
     
-    // Admin tidak perlu old password
     if (currentUser.role === 'admin') {
         if (oldPasswordGroup) oldPasswordGroup.style.display = 'none';
         const oldPassInput = document.getElementById('cpOldPassword');
@@ -1488,10 +1039,10 @@ function toggleCPVisibility(inputId, btn) {
     if (!input || !btn) return;
     if (input.type === 'password') {
         input.type = 'text';
-        btn.textContent = '🙈';
+        btn.textContent = 'ðŸ™ˆ';
     } else {
         input.type = 'password';
-        btn.textContent = '👁️';
+        btn.textContent = 'ðŸ‘ï¸';
     }
 }
 
@@ -1511,7 +1062,6 @@ function hideCPError() {
     }
 }
 
-// Ganti fungsi handleChangePasswordSubmit dengan ini:
 async function handleChangePasswordSubmit(e) {
     e.preventDefault();
     hideCPError();
@@ -1525,7 +1075,6 @@ async function handleChangePasswordSubmit(e) {
     const newPassword = document.getElementById('cpNewPassword')?.value || '';
     const confirmPassword = document.getElementById('cpConfirmPassword')?.value || '';
     
-    // Validasi input...
     if (newPassword.length < 4) {
         showCPError('Password baru minimal 4 karakter');
         return;
@@ -1538,12 +1087,11 @@ async function handleChangePasswordSubmit(e) {
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const originalText = submitBtn ? submitBtn.textContent : 'Simpan';
     if(submitBtn) {
-        submitBtn.textContent = '⏳ Menyimpan...';
+        submitBtn.textContent = 'â³ Menyimpan...';
         submitBtn.disabled = true;
     }
     
     try {
-        // Gunakan JSONP untuk bisa membaca response
         const result = await changePasswordJSONP(
             currentUser.username,
             currentUser.role === 'admin' ? '' : oldPassword,
@@ -1551,10 +1099,9 @@ async function handleChangePasswordSubmit(e) {
         );
         
         if (result.success) {
-            // Update cache lokal
             updatePasswordInCache(currentUser.username, newPassword);
             
-            showCustomAlert('✓ Password berhasil diubah! Silakan login ulang.', 'success');
+            showCustomAlert('âœ“ Password berhasil diubah! Silakan login ulang.', 'success');
             closeChangePasswordModal();
             
             setTimeout(() => {
@@ -1575,7 +1122,6 @@ async function handleChangePasswordSubmit(e) {
     }
 }
 
-// Pastikan fungsi JSONP ini ada (sudah ada di kode Anda tapi perlu dipastikan):
 function changePasswordJSONP(username, oldPassword, newPassword) {
     return new Promise((resolve, reject) => {
         const callbackName = 'cpCallback_' + Date.now();
@@ -1603,8 +1149,9 @@ function changePasswordJSONP(username, oldPassword, newPassword) {
     });
 }
 
+
 // ============================================
-// 10. UPLOAD PROGRESS MANAGER
+// 11. UPLOAD PROGRESS MANAGER
 // ============================================
 
 function showUploadProgress(title = 'Mengupload Data...') {
@@ -1683,7 +1230,7 @@ function setUploadStep(stepNum) {
                 step.classList.remove('active');
                 step.classList.add('completed');
                 const icon = step.querySelector('.step-icon');
-                if (icon) icon.innerHTML = '✓';
+                if (icon) icon.innerHTML = 'âœ“';
             } else if (i === stepNum) {
                 step.classList.add('active');
                 step.classList.remove('completed');
@@ -1707,7 +1254,7 @@ function completeUploadProgress() {
     
     overlay?.classList.add('success');
     if(turbine) turbine.classList.remove('spinning');
-    if(statusText) statusText.textContent = '✓ Berhasil!';
+    if(statusText) statusText.textContent = 'âœ“ Berhasil!';
     
     setTimeout(() => hideUploadProgress(), 800);
 }
@@ -1722,7 +1269,7 @@ function errorUploadProgress() {
     
     overlay?.classList.add('error');
     if(turbine) turbine.classList.remove('spinning');
-    if(statusText) statusText.textContent = '✗ Gagal Mengirim';
+    if(statusText) statusText.textContent = 'âœ— Gagal Mengirim';
     if(percentage) percentage.textContent = 'Error';
     
     setTimeout(() => hideUploadProgress(), 1500);
@@ -1746,7 +1293,207 @@ function cancelUpload() {
 }
 
 // ============================================
-// 11. LOGSHEET FUNCTIONS (TURBINE)
+// 12. PHOTO FUNCTIONS FOR PARAMETER LOGSHEET
+// ============================================
+// NEW from v1.7.1 - Photo validation for parameters
+
+function handleParamPhoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 5 * 1024 * 1024) {
+        showCustomAlert('Ukuran foto terlalu besar. Maksimal 5MB.', 'error');
+        event.target.value = '';
+        return;
+    }
+    
+    if (!file.type.startsWith('image/')) {
+        showCustomAlert('File harus berupa gambar.', 'error');
+        event.target.value = '';
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        currentParamPhoto = e.target.result;
+        updateParamPhotoPreview();
+        saveParamPhotosToDraft();
+        showCustomAlert('Foto berhasil diambil!', 'success');
+    };
+    reader.readAsDataURL(file);
+}
+
+function updateParamPhotoPreview() {
+    const preview = document.getElementById('paramPhotoPreview');
+    const photoSection = document.getElementById('paramPhotoSection');
+    
+    if (preview) {
+        if (currentParamPhoto) {
+            preview.innerHTML = `<img src="${currentParamPhoto}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;" alt="Parameter Photo">`;
+            if (photoSection) photoSection.classList.add('has-photo');
+        } else {
+            preview.innerHTML = `
+                <div class="photo-placeholder">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    <span>Ambil Foto</span>
+                </div>
+            `;
+            if (photoSection) photoSection.classList.remove('has-photo');
+        }
+    }
+}
+
+function loadParamPhotoForCurrentStep() {
+    const fullLabel = AREAS[activeArea][activeIdx];
+    const photoKey = `${activeArea}_${fullLabel}`;
+    
+    if (paramPhotos && paramPhotos[photoKey]) {
+        currentParamPhoto = paramPhotos[photoKey];
+    } else {
+        currentParamPhoto = null;
+    }
+    updateParamPhotoPreview();
+}
+
+function saveParamPhotosToDraft() {
+    if (!activeArea || activeIdx === undefined) return;
+    
+    const fullLabel = AREAS[activeArea][activeIdx];
+    const photoKey = `${activeArea}_${fullLabel}`;
+    
+    if (currentParamPhoto) {
+        paramPhotos[photoKey] = currentParamPhoto;
+    } else {
+        delete paramPhotos[photoKey];
+    }
+    
+    localStorage.setItem(PHOTO_DRAFT_KEYS.LOGSHEET_PHOTOS, JSON.stringify(paramPhotos));
+}
+
+function loadParamPhotosFromDraft() {
+    try {
+        const saved = localStorage.getItem(PHOTO_DRAFT_KEYS.LOGSHEET_PHOTOS);
+        if (saved) {
+            paramPhotos = JSON.parse(saved);
+        } else {
+            paramPhotos = {};
+        }
+    } catch (e) {
+        paramPhotos = {};
+    }
+}
+
+function clearParamPhoto() {
+    currentParamPhoto = null;
+    updateParamPhotoPreview();
+    saveParamPhotosToDraft();
+}
+
+// ============================================
+// 13. PHOTO FUNCTIONS FOR CT PARAMETER LOGSHEET
+// ============================================
+// NEW from v1.7.1 - Photo validation for CT parameters
+
+function handleCTParamPhoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 5 * 1024 * 1024) {
+        showCustomAlert('Ukuran foto terlalu besar. Maksimal 5MB.', 'error');
+        event.target.value = '';
+        return;
+    }
+    
+    if (!file.type.startsWith('image/')) {
+        showCustomAlert('File harus berupa gambar.', 'error');
+        event.target.value = '';
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        currentCTParamPhoto = e.target.result;
+        updateCTParamPhotoPreview();
+        saveCTParamPhotosToDraft();
+        showCustomAlert('Foto berhasil diambil!', 'success');
+    };
+    reader.readAsDataURL(file);
+}
+
+function updateCTParamPhotoPreview() {
+    const preview = document.getElementById('ctParamPhotoPreview');
+    const photoSection = document.getElementById('ctParamPhotoSection');
+    
+    if (preview) {
+        if (currentCTParamPhoto) {
+            preview.innerHTML = `<img src="${currentCTParamPhoto}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;" alt="CT Parameter Photo">`;
+            if (photoSection) photoSection.classList.add('has-photo');
+        } else {
+            preview.innerHTML = `
+                <div class="photo-placeholder">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    <span>Ambil Foto</span>
+                </div>
+            `;
+            if (photoSection) photoSection.classList.remove('has-photo');
+        }
+    }
+}
+
+function loadCTParamPhotoForCurrentStep() {
+    const fullLabel = AREAS_CT[activeAreaCT][activeIdxCT];
+    const photoKey = `${activeAreaCT}_${fullLabel}`;
+    
+    if (ctParamPhotos && ctParamPhotos[photoKey]) {
+        currentCTParamPhoto = ctParamPhotos[photoKey];
+    } else {
+        currentCTParamPhoto = null;
+    }
+    updateCTParamPhotoPreview();
+}
+
+function saveCTParamPhotosToDraft() {
+    if (!activeAreaCT || activeIdxCT === undefined) return;
+    
+    const fullLabel = AREAS_CT[activeAreaCT][activeIdxCT];
+    const photoKey = `${activeAreaCT}_${fullLabel}`;
+    
+    if (currentCTParamPhoto) {
+        ctParamPhotos[photoKey] = currentCTParamPhoto;
+    } else {
+        delete ctParamPhotos[photoKey];
+    }
+    
+    localStorage.setItem(PHOTO_DRAFT_KEYS.CT_LOGSHEET_PHOTOS, JSON.stringify(ctParamPhotos));
+}
+
+function loadCTParamPhotosFromDraft() {
+    try {
+        const saved = localStorage.getItem(PHOTO_DRAFT_KEYS.CT_LOGSHEET_PHOTOS);
+        if (saved) {
+            ctParamPhotos = JSON.parse(saved);
+        } else {
+            ctParamPhotos = {};
+        }
+    } catch (e) {
+        ctParamPhotos = {};
+    }
+}
+
+function clearCTParamPhoto() {
+    currentCTParamPhoto = null;
+    updateCTParamPhotoPreview();
+    saveCTParamPhotosToDraft();
+}
+
+// ============================================
+// 14. LOGSHEET FUNCTIONS (TURBINE)
 // ============================================
 
 function fetchLastData() {
@@ -1807,7 +1554,7 @@ function renderMenu() {
                 <div class="area-progress-ring">
                     <svg width="40" height="40" viewBox="0 0 40 40">
                         <circle cx="20" cy="20" r="18" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
-                        <circle cx="20" cy="20" r="18" fill="none" stroke="${isCompleted ? '#10b981' : 'var(--primary)'}" 
+                        <circle cx="20" cy="20" r="18" fill="none" stroke="${isCompleted ? '#10b981' : 'var(--primary')}" 
                                 stroke-width="3" stroke-linecap="round" stroke-dasharray="${circumference}" 
                                 stroke-dashoffset="${strokeDashoffset}" transform="rotate(-90 20 20)"/>
                         <text x="20" y="24" text-anchor="middle" font-size="10" font-weight="bold" fill="${isCompleted ? '#10b981' : 'var(--text-primary)'}">${filled}</text>
@@ -1816,12 +1563,12 @@ function renderMenu() {
                 <div class="area-info">
                     <div class="area-name">${areaName}</div>
                     <div class="area-meta ${hasAbnormal ? 'warning' : ''}">
-                        ${hasAbnormal ? '⚠️ Ada parameter bermasalah • ' : ''}${filled} dari ${total} parameter
+                        ${hasAbnormal ? 'âš ï¸ Ada parameter bermasalah â€¢ ' : ''}${filled} dari ${total} parameter
                     </div>
                 </div>
                 <div class="area-status">
                     ${hasAbnormal ? '<span style="color: #ef4444; margin-right: 4px;">!</span>' : ''}
-                    ${isCompleted ? '✓' : '❯'}
+                    ${isCompleted ? 'âœ“' : 'â¯'}
                 </div>
             </div>
         `;
@@ -2014,6 +1761,9 @@ function showStep() {
     loadAbnormalStatus(fullLabel);
     renderProgressDots();
     
+    // Load photo for current step - NEW from v1.7.1
+    loadParamPhotoForCurrentStep();
+    
     setTimeout(() => {
         const input = document.getElementById('valInput');
         if (input && inputType.type === 'text' && !input.disabled) {
@@ -2183,6 +1933,9 @@ function saveCurrentStep() {
     }
     
     localStorage.setItem(DRAFT_KEYS.LOGSHEET, JSON.stringify(currentInput));
+    
+    // Save photo for current step - NEW from v1.7.1
+    saveParamPhotosToDraft();
 }
 
 function saveStep() {
@@ -2221,10 +1974,12 @@ async function sendToSheet() {
         });
     });
     
+    // Include photos in the data - NEW from v1.7.1
     const finalData = {
         type: 'LOGSHEET',
         Operator: currentUser ? currentUser.name : 'Unknown',
         OperatorId: currentUser ? currentUser.id : 'Unknown',
+        Photos: paramPhotos, // Include photos
         ...allParameters
     };
     
@@ -2240,10 +1995,12 @@ async function sendToSheet() {
         });
         
         progress.complete();
-        showCustomAlert('✓ Data berhasil dikirim ke sistem!', 'success');
+        showCustomAlert('âœ“ Data berhasil dikirim ke sistem!', 'success');
         
         currentInput = {};
+        paramPhotos = {}; // Clear photos - NEW from v1.7.1
         localStorage.removeItem(DRAFT_KEYS.LOGSHEET);
+        localStorage.removeItem(PHOTO_DRAFT_KEYS.LOGSHEET_PHOTOS); // Clear photo draft - NEW from v1.7.1
         
         setTimeout(() => navigateTo('homeScreen'), 1500);
         
@@ -2261,9 +2018,28 @@ async function sendToSheet() {
     }
 }
 
+
 // ============================================
-// 12. TPM FUNCTIONS
+// 15. TPM FUNCTIONS
 // ============================================
+
+function renderTPMAreas() {
+    const list = document.getElementById('tpmAreaList');
+    if (!list) return;
+    
+    let html = '';
+    TPM_AREAS.forEach(area => {
+        html += `
+            <div class="area-item" onclick="openTPMArea('${area}')">
+                <div class="area-info">
+                    <div class="area-name">${area}</div>
+                </div>
+                <div class="area-status">â¯</div>
+            </div>
+        `;
+    });
+    list.innerHTML = html;
+}
 
 function updateTPMUserInfo() {
     const tpmHeaderUser = document.getElementById('tpmHeaderUser');
@@ -2371,7 +2147,7 @@ function selectTPMStatus(status) {
     
     if ((status === 'abnormal' || status === 'off') && !currentTPMPhoto) {
         setTimeout(() => {
-            showCustomAlert('⚠️ Kondisi abnormal/off wajib didokumentasikan dengan foto!', 'warning');
+            showCustomAlert('âš ï¸ Kondisi abnormal/off wajib didokumentasikan dengan foto!', 'warning');
         }, 100);
     }
 }
@@ -2428,7 +2204,7 @@ async function submitTPMData() {
         tpmHistory.push({...tpmData, photo: '[UPLOADED]'});
         localStorage.setItem(DRAFT_KEYS.TPM_HISTORY, JSON.stringify(tpmHistory));
         
-        showCustomAlert(`✓ Data TPM ${activeTPMArea} berhasil disimpan!`, 'success');
+        showCustomAlert(`âœ“ Data TPM ${activeTPMArea} berhasil disimpan!`, 'success');
         currentTPMPhoto = null;
         currentTPMStatus = '';
         
@@ -2448,7 +2224,7 @@ async function submitTPMData() {
 }
 
 // ============================================
-// 13. BALANCING FUNCTIONS
+// 16. BALANCING FUNCTIONS
 // ============================================
 
 function initBalancingScreen() {
@@ -2493,7 +2269,7 @@ function detectShift() {
     const kegiatanNum = document.getElementById('kegiatanShiftNum');
     
     if (badge) badge.textContent = `SHIFT ${shift}`;
-    if (info) info.textContent = `${shiftText} • Auto Save Aktif`;
+    if (info) info.textContent = `${shiftText} â€¢ Auto Save Aktif`;
     if (kegiatanNum) kegiatanNum.textContent = shift;
     
     if (badge) {
@@ -2673,7 +2449,6 @@ async function loadLastBalancingData(fromSpreadsheet = true) {
             return;
         }
         
-        // Mapping field dari server ke form
         const fieldMapping = {
             'loadMW': lastData['Load_MW'],
             'eksporMW': lastData['Ekspor_Impor_MW'],
@@ -2707,7 +2482,7 @@ async function loadLastBalancingData(fromSpreadsheet = true) {
             'ti6146': lastData['TI6146_C'],
             'ti6126': lastData['TI6126_C'],
             'axialDisplacement': lastData['Axial_Displacement_mm'],
-            'vi6102': lastData['VI6102_μm'],
+            'vi6102': lastData['VI6102_Î¼m'],
             'te6134': lastData['TE6134_C'],
             'ctSuFan': lastData['CT_SU_Fan'],
             'ctSuPompa': lastData['CT_SU_Pompa'],
@@ -2732,8 +2507,8 @@ async function loadLastBalancingData(fromSpreadsheet = true) {
         saveBalancingDraft();
         
         const msg = source === 'spreadsheet' 
-            ? `✓ Data terakhir dari server dimuat.`
-            : `✓ Data terakhir dari penyimpanan lokal dimuat.`;
+            ? `âœ“ Data terakhir dari server dimuat.`
+            : `âœ“ Data terakhir dari penyimpanan lokal dimuat.`;
         
         showCustomAlert(msg, 'success');
         
@@ -2778,7 +2553,7 @@ function resetBalancingForm() {
         eksporLabel.style.color = '#94a3b8';
     }
     if (eksporHint) {
-        eksporHint.innerHTML = '💡 <strong>Minus (-) = Ekspor</strong> | <strong>Plus (+) = Impor</strong>';
+        eksporHint.innerHTML = 'ðŸ’¡ <strong>Minus (-) = Ekspor</strong> | <strong>Plus (+) = Impor</strong>';
         eksporHint.style.color = '#94a3b8';
     }
     
@@ -2797,7 +2572,7 @@ function handleEksporInput(input) {
             label.style.color = '#94a3b8';
         }
         if (hint) {
-            hint.innerHTML = '💡 <strong>Minus (-) = Ekspor</strong> | <strong>Plus (+) = Impor</strong>';
+            hint.innerHTML = 'ðŸ’¡ <strong>Minus (-) = Ekspor</strong> | <strong>Plus (+) = Impor</strong>';
             hint.style.color = '#94a3b8';
         }
         input.style.borderColor = 'rgba(148, 163, 184, 0.2)';
@@ -2812,7 +2587,7 @@ function handleEksporInput(input) {
             label.style.color = '#10b981';
         }
         if (hint) {
-            hint.innerHTML = '✓ Posisi: <strong>Ekspor ke Grid</strong> (Nilai negatif)';
+            hint.innerHTML = 'âœ“ Posisi: <strong>Ekspor ke Grid</strong> (Nilai negatif)';
             hint.style.color = '#10b981';
         }
         input.style.borderColor = '#10b981';
@@ -2825,7 +2600,7 @@ function handleEksporInput(input) {
             label.style.color = '#f59e0b';
         }
         if (hint) {
-            hint.innerHTML = '✓ Posisi: <strong>Impor dari Grid</strong> (Nilai positif)';
+            hint.innerHTML = 'âœ“ Posisi: <strong>Impor dari Grid</strong> (Nilai positif)';
             hint.style.color = '#f59e0b';
         }
         input.style.borderColor = '#f59e0b';
@@ -2838,7 +2613,7 @@ function handleEksporInput(input) {
             label.style.color = '#94a3b8';
         }
         if (hint) {
-            hint.innerHTML = '⚪ Posisi: <strong>Netral</strong> (Nilai 0)';
+            hint.innerHTML = 'âšª Posisi: <strong>Netral</strong> (Nilai 0)';
             hint.style.color = '#64748b';
         }
         input.style.borderColor = 'rgba(148, 163, 184, 0.2)';
@@ -2945,53 +2720,53 @@ function formatWhatsAppMessage(data) {
     message += `Jam ${data.Jam}\n\n`;
     
     message += `*Output Power STG 17,5*\n`;
-    message += `⠂ Load = ${formatNum(data.Load_MW)} MW\n`;
-    message += `⠂ ${data.Ekspor_Impor_Status} = ${formatNum(Math.abs(data.Ekspor_Impor_MW), 3)} MW\n\n`;
+    message += `â ‚ Load = ${formatNum(data.Load_MW)} MW\n`;
+    message += `â ‚ ${data.Ekspor_Impor_Status} = ${formatNum(Math.abs(data.Ekspor_Impor_MW), 3)} MW\n\n`;
     
     message += `*Balance Power SCADA*\n`;
-    message += `⠂ PLN = ${formatNum(data.PLN_MW)}MW\n`;
-    message += `⠂ UBB = ${formatNum(data.UBB_MW)}MW\n`;
-    message += `⠂ PIE = ${formatNum(data.PIE_MW)} MW\n`;
-    message += `⠂ TG-65 = ${formatNum(data.TG65_MW)} MW\n`;
-    message += `⠂ TG-66 = ${formatNum(data.TG66_MW)} MW\n`;
-    message += `⠂ GTG = ${formatNum(data.GTG_MW)} MW\n\n`;
+    message += `â ‚ PLN = ${formatNum(data.PLN_MW)}MW\n`;
+    message += `â ‚ UBB = ${formatNum(data.UBB_MW)}MW\n`;
+    message += `â ‚ PIE = ${formatNum(data.PIE_MW)} MW\n`;
+    message += `â ‚ TG-65 = ${formatNum(data.TG65_MW)} MW\n`;
+    message += `â ‚ TG-66 = ${formatNum(data.TG66_MW)} MW\n`;
+    message += `â ‚ GTG = ${formatNum(data.GTG_MW)} MW\n\n`;
     
     message += `*Konsumsi Power 3B*\n`;
-    message += `● SS-6500 (TR-Main 01) = ${formatNum(data.SS6500_MW, 3)} MW\n`;
-    message += `● SS-2000 *Via ${data.SS2000_Via}*\n`;
-    message += `  ⠂ Active power = ${formatNum(data.Active_Power_MW, 3)} MW\n`;
-    message += `  ⠂ Reactive power = ${formatNum(data.Reactive_Power_MVAR, 3)} MVAR\n`;
-    message += `  ⠂ Current S = ${formatNum(data.Current_S_A, 1)} A\n`;
-    message += `  ⠂ Voltage = ${formatInt(data.Voltage_V)} V\n`;
-    message += `  ⠂ (HVS65 L02) = ${formatNum(data.HVS65_L02_MW, 3)} MW (${formatInt(data.HVS65_L02_Current_A)} A)\n`;
-    message += `● Total 3B = ${formatNum(data.Total_3B_MW, 3)}MW\n\n`;
+    message += `â— SS-6500 (TR-Main 01) = ${formatNum(data.SS6500_MW, 3)} MW\n`;
+    message += `â— SS-2000 *Via ${data.SS2000_Via}*\n`;
+    message += `  â ‚ Active power = ${formatNum(data.Active_Power_MW, 3)} MW\n`;
+    message += `  â ‚ Reactive power = ${formatNum(data.Reactive_Power_MVAR, 3)} MVAR\n`;
+    message += `  â ‚ Current S = ${formatNum(data.Current_S_A, 1)} A\n`;
+    message += `  â ‚ Voltage = ${formatInt(data.Voltage_V)} V\n`;
+    message += `  â ‚ (HVS65 L02) = ${formatNum(data.HVS65_L02_MW, 3)} MW (${formatInt(data.HVS65_L02_Current_A)} A)\n`;
+    message += `â— Total 3B = ${formatNum(data.Total_3B_MW, 3)}MW\n\n`;
     
     message += `*Produksi Steam SA*\n`;
-    message += `⠂ FQ-1105 = ${formatNum(data['Produksi_Steam_SA_t/h'], 1)} t/h\n\n`;
+    message += `â ‚ FQ-1105 = ${formatNum(data['Produksi_Steam_SA_t/h'], 1)} t/h\n\n`;
     
     message += `*Konsumsi Steam 3B*\n`;
-    message += `⠂ STG 17,5 = ${formatNum(data['STG_Steam_t/h'], 1)} t/h\n`;
-    message += `⠂ PA2 = ${formatNum(data['PA2_Steam_t/h'], 1)} t/h\n`;
-    message += `⠂ Puri2 = ${formatNum(data['Puri2_Steam_t/h'], 1)} t/h\n`;
-    message += `⠂ Melter SA2 = ${formatNum(data['Melter_SA2_t/h'], 1)} t/h\n`;
-    message += `⠂ Ejector = ${formatNum(data['Ejector_t/h'], 1)} t/h\n`;
-    message += `⠂ Gland Seal = ${formatNum(data['Gland_Seal_t/h'], 1)} t/h\n`;
-    message += `⠂ Deaerator = ${formatNum(data['Deaerator_t/h'], 1)} t/h\n`;
-    message += `⠂ Dump Condenser = ${formatNum(data['Dump_Condenser_t/h'], 1)} t/h\n`;
-    message += `⠂ PCV-6105 = ${formatNum(data['PCV6105_t/h'], 1)} t/h\n`;
-    message += `*⠂ Total Konsumsi* = ${formatNum(data['Total_Konsumsi_Steam_t/h'], 1)} t/h\n\n`;
+    message += `â ‚ STG 17,5 = ${formatNum(data['STG_Steam_t/h'], 1)} t/h\n`;
+    message += `â ‚ PA2 = ${formatNum(data['PA2_Steam_t/h'], 1)} t/h\n`;
+    message += `â ‚ Puri2 = ${formatNum(data['Puri2_Steam_t/h'], 1)} t/h\n`;
+    message += `â ‚ Melter SA2 = ${formatNum(data['Melter_SA2_t/h'], 1)} t/h\n`;
+    message += `â ‚ Ejector = ${formatNum(data['Ejector_t/h'], 1)} t/h\n`;
+    message += `â ‚ Gland Seal = ${formatNum(data['Gland_Seal_t/h'], 1)} t/h\n`;
+    message += `â ‚ Deaerator = ${formatNum(data['Deaerator_t/h'], 1)} t/h\n`;
+    message += `â ‚ Dump Condenser = ${formatNum(data['Dump_Condenser_t/h'], 1)} t/h\n`;
+    message += `â ‚ PCV-6105 = ${formatNum(data['PCV6105_t/h'], 1)} t/h\n`;
+    message += `*â ‚ Total Konsumsi* = ${formatNum(data['Total_Konsumsi_Steam_t/h'], 1)} t/h\n\n`;
     
     message += `*${data.LPS_Balance_Status}* = ${formatNum(data['LPS_Balance_t/h'], 1)} t/h\n\n`;
     
     message += `*Monitoring*\n`;
-    message += `⠂ Steam Extraction PI-6122 = ${formatNum(data['PI6122_kg/cm2'], 2)} kg/cm² & TI-6112 = ${formatNum(data['TI6112_C'], 1)} °C\n`;
-    message += `⠂ Temp. Cooling Air Inlet (TI-6146/47) = ${formatNum(data['TI6146_C'], 2)} °C\n`;
-    message += `⠂ Temp. Lube Oil (TI-6126) = ${formatNum(data['TI6126_C'], 2)} °C\n`;
-    message += `⠂ Axial Displacement = ${formatNum(data['Axial_Displacement_mm'], 2)} mm (High : 0,6 mm)\n`;
-    message += `⠂ Vibrasi VI-6102 = ${formatNum(data['VI6102_μm'], 2)} μm (High : 85 μm)\n`;
-    message += `⠂ Temp. Journal Bearing TE-6134 = ${formatNum(data['TE6134_C'], 1)} °C (High : 115 °C)\n`;
-    message += `⠂ CT SU = Fan : ${formatInt(data['CT_SU_Fan'])} & Pompa : ${formatInt(data['CT_SU_Pompa'])}\n`;
-    message += `⠂ CT SA = Fan : ${formatInt(data['CT_SA_Fan'])} & Pompa : ${formatInt(data['CT_SA_Pompa'])}\n\n`;
+    message += `â ‚ Steam Extraction PI-6122 = ${formatNum(data['PI6122_kg/cm2'], 2)} kg/cmÂ² & TI-6112 = ${formatNum(data['TI6112_C'], 1)} Â°C\n`;
+    message += `â ‚ Temp. Cooling Air Inlet (TI-6146/47) = ${formatNum(data['TI6146_C'], 2)} Â°C\n`;
+    message += `â ‚ Temp. Lube Oil (TI-6126) = ${formatNum(data['TI6126_C'], 2)} Â°C\n`;
+    message += `â ‚ Axial Displacement = ${formatNum(data['Axial_Displacement_mm'], 2)} mm (High : 0,6 mm)\n`;
+    message += `â ‚ Vibrasi VI-6102 = ${formatNum(data['VI6102_Î¼m'], 2)} Î¼m (High : 85 Î¼m)\n`;
+    message += `â ‚ Temp. Journal Bearing TE-6134 = ${formatNum(data['TE6134_C'], 1)} Â°C (High : 115 Â°C)\n`;
+    message += `â ‚ CT SU = Fan : ${formatInt(data['CT_SU_Fan'])} & Pompa : ${formatInt(data['CT_SU_Pompa'])}\n`;
+    message += `â ‚ CT SA = Fan : ${formatInt(data['CT_SA_Fan'])} & Pompa : ${formatInt(data['CT_SA_Pompa'])}\n\n`;
     
     message += `*Kegiatan Shift ${data.Shift}*\n`;
     message += data.Kegiatan_Shift || '-';
@@ -3067,7 +2842,7 @@ async function submitBalancingData() {
         'TI6146_C': parseFloat(document.getElementById('ti6146')?.value) || 0,
         'TI6126_C': parseFloat(document.getElementById('ti6126')?.value) || 0,
         'Axial_Displacement_mm': parseFloat(document.getElementById('axialDisplacement')?.value) || 0,
-        'VI6102_μm': parseFloat(document.getElementById('vi6102')?.value) || 0,
+        'VI6102_Î¼m': parseFloat(document.getElementById('vi6102')?.value) || 0,
         'TE6134_C': parseFloat(document.getElementById('te6134')?.value) || 0,
         'CT_SU_Fan': parseInt(document.getElementById('ctSuFan')?.value) || 0,
         'CT_SU_Pompa': parseInt(document.getElementById('ctSuPompa')?.value) || 0,
@@ -3091,7 +2866,7 @@ async function submitBalancingData() {
         });
         
         progress.complete();
-        showCustomAlert('✓ Data Balancing berhasil dikirim!', 'success');
+        showCustomAlert('âœ“ Data Balancing berhasil dikirim!', 'success');
         
         let balancingHistory = JSON.parse(localStorage.getItem(DRAFT_KEYS.BALANCING_HISTORY) || '[]');
         balancingHistory.push({
@@ -3129,8 +2904,9 @@ function toggleSS2000Detail() {
     }
 }
 
+
 // ============================================
-// 14. CT LOGSHEET FUNCTIONS
+// 17. CT LOGSHEET FUNCTIONS
 // ============================================
 
 function fetchLastDataCT() {
@@ -3196,12 +2972,12 @@ function renderCTMenu() {
                 <div class="area-info">
                     <div class="area-name">${areaName}</div>
                     <div class="area-meta ${hasAbnormal ? 'warning' : ''}">
-                        ${hasAbnormal ? '⚠️ Ada parameter bermasalah • ' : ''}${filled} dari ${total} parameter
+                        ${hasAbnormal ? 'âš ï¸ Ada parameter bermasalah â€¢ ' : ''}${filled} dari ${total} parameter
                     </div>
                 </div>
                 <div class="area-status">
                     ${hasAbnormal ? '<span style="color: #ef4444; margin-right: 4px;">!</span>' : ''}
-                    ${isCompleted ? '✓' : '❯'}
+                    ${isCompleted ? 'âœ“' : 'â¯'}
                 </div>
             </div>
         `;
@@ -3542,6 +3318,9 @@ function showCTStep() {
     loadCTAbnormalStatus(fullLabel);
     renderCTProgressDots();
     
+    // Load photo for current CT step - NEW from v1.7.1
+    loadCTParamPhotoForCurrentStep();
+    
     setTimeout(() => {
         const input = document.getElementById('ctValInput');
         if (input && inputType.type === 'text' && !input.disabled) {
@@ -3586,6 +3365,9 @@ function saveCTStep() {
     
     localStorage.setItem(DRAFT_KEYS_CT.LOGSHEET, JSON.stringify(currentInputCT));
     
+    // Save CT photo for current step - NEW from v1.7.1
+    saveCTParamPhotosToDraft();
+    
     if (activeIdxCT < AREAS_CT[activeAreaCT].length - 1) {
         activeIdxCT++;
         showCTStep();
@@ -3596,8 +3378,8 @@ function saveCTStep() {
 }
 
 function goBackCT() {
-    const fullLabel = AREAS_CT[activeAreaCT][activeIdxCT];
     const input = document.getElementById('ctValInput');
+    const fullLabel = AREAS_CT[activeAreaCT][activeIdxCT];
     
     if (!currentInputCT[activeAreaCT]) currentInputCT[activeAreaCT] = {};
     
@@ -3630,6 +3412,9 @@ function goBackCT() {
     
     localStorage.setItem(DRAFT_KEYS_CT.LOGSHEET, JSON.stringify(currentInputCT));
     
+    // Save CT photo for current step - NEW from v1.7.1
+    saveCTParamPhotosToDraft();
+    
     if (activeIdxCT > 0) {
         activeIdxCT--;
         showCTStep();
@@ -3651,10 +3436,12 @@ async function sendCTToSheet() {
         });
     });
     
+    // Include CT photos in the data - NEW from v1.7.1
     const finalData = {
         type: 'LOGSHEET_CT',
         Operator: currentUser ? currentUser.name : 'Unknown',
         OperatorId: currentUser ? currentUser.id : 'Unknown',
+        Photos: ctParamPhotos, // Include CT photos
         ...allParameters
     };
     
@@ -3670,10 +3457,12 @@ async function sendCTToSheet() {
         });
         
         progress.complete();
-        showCustomAlert('✓ Data CT berhasil dikirim ke sistem!', 'success');
+        showCustomAlert('âœ“ Data CT berhasil dikirim ke sistem!', 'success');
         
         currentInputCT = {};
+        ctParamPhotos = {}; // Clear CT photos - NEW from v1.7.1
         localStorage.removeItem(DRAFT_KEYS_CT.LOGSHEET);
+        localStorage.removeItem(PHOTO_DRAFT_KEYS.CT_LOGSHEET_PHOTOS); // Clear CT photo draft - NEW from v1.7.1
         
         setTimeout(() => navigateTo('homeScreen'), 1500);
         
@@ -3692,7 +3481,7 @@ async function sendCTToSheet() {
 }
 
 // ============================================
-// 15. UI & EVENT LISTENERS
+// 18. UI & EVENT LISTENERS
 // ============================================
 
 function setupLoginListeners() {
@@ -3721,21 +3510,57 @@ function setupTPMListeners() {
     }
 }
 
+function setupParamPhotoListeners() {
+    // NEW from v1.7.1 - Setup listeners for parameter photo
+    const paramCamera = document.getElementById('paramCamera');
+    if (paramCamera) {
+        paramCamera.addEventListener('change', handleParamPhoto);
+    }
+    
+    const ctParamCamera = document.getElementById('ctParamCamera');
+    if (ctParamCamera) {
+        ctParamCamera.addEventListener('change', handleCTParamPhoto);
+    }
+}
+
 function simulateLoading() {
     let progress = 0;
     const loaderProgress = document.getElementById('loaderProgress');
+    const loader = document.getElementById('loader');
+    
+    // Safety timeout - always hide loader after max 4 seconds
+    const safetyTimeout = setTimeout(() => {
+        if (loader) {
+            loader.style.opacity = '0';
+            loader.style.transition = 'opacity 0.5s ease';
+            setTimeout(() => {
+                loader.style.display = 'none';
+            }, 500);
+        }
+    }, 4000);
+    
     const interval = setInterval(() => {
-        progress += Math.random() * 30;
+        progress += Math.random() * 25 + 10;
         if (progress >= 100) {
             progress = 100;
             clearInterval(interval);
+            clearTimeout(safetyTimeout);
+            
+            if (loaderProgress) loaderProgress.style.width = '100%';
+            
             setTimeout(() => {
-                const loader = document.getElementById('loader');
-                if (loader) loader.style.display = 'none';
-            }, 500);
+                if (loader) {
+                    loader.style.opacity = '0';
+                    loader.style.transition = 'opacity 0.5s ease';
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                    }, 500);
+                }
+            }, 300);
+        } else {
+            if (loaderProgress) loaderProgress.style.width = progress + '%';
         }
-        if (loaderProgress) loaderProgress.style.width = progress + '%';
-    }, 300);
+    }, 200);
 }
 
 function loadUserStats() {
@@ -3761,7 +3586,7 @@ function loadUserStats() {
 }
 
 // ============================================
-// 16. PWA INSTALL HANDLER
+// 19. PWA INSTALL HANDLER
 // ============================================
 
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -3777,7 +3602,7 @@ window.addEventListener('appinstalled', () => {
     hideCustomInstallBanner();
     deferredPrompt = null;
     installBannerShown = true;
-    showToast('✓ Aplikasi berhasil diinstall!', 'success');
+    showToast('âœ“ Aplikasi berhasil diinstall!', 'success');
 });
 
 function showCustomInstallBanner() {
@@ -3814,7 +3639,7 @@ function showCustomInstallBanner() {
                 font-size: 40px;
                 box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
             ">
-                ⚡
+                âš¡
             </div>
             
             <h3 style="color: #f8fafc; font-size: 1.25rem; font-weight: 700; margin-bottom: 8px;">
@@ -3887,7 +3712,7 @@ async function installPWA() {
     
     if (outcome === 'accepted') {
         hideCustomInstallBanner();
-        showToast('✓ Menginstall aplikasi...', 'success');
+        showToast('âœ“ Menginstall aplikasi...', 'success');
     } else {
         hideCustomInstallBanner();
     }
@@ -3906,7 +3731,7 @@ function showToast(msg, type) {
 }
 
 // ============================================
-// 17. KEYBOARD SHORTCUTS
+// 20. KEYBOARD SHORTCUTS
 // ============================================
 
 document.addEventListener('keydown', (e) => {
@@ -3933,20 +3758,34 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ============================================
-// 18. DOM READY INITIALIZATION
+// 21. DOM READY INITIALIZATION
 // ============================================
 
 window.addEventListener('DOMContentLoaded', () => {
-    initState();
-    
-    const versionDisplay = document.getElementById('versionDisplay');
-    if (versionDisplay) versionDisplay.textContent = APP_VERSION;
-    
-    initAuth();
-    setupLoginListeners();
-    setupTPMListeners();
-    
-    simulateLoading();
-    
-    console.log(`${APP_NAME} v${APP_VERSION} initialized successfully`);
+    try {
+        initState();
+        
+        const versionDisplay = document.getElementById('versionDisplay');
+        if (versionDisplay) versionDisplay.textContent = APP_VERSION;
+        
+        initAuth();
+        setupLoginListeners();
+        setupTPMListeners();
+        setupParamPhotoListeners(); // NEW from v1.7.1
+        
+        simulateLoading();
+        
+        console.log(`${APP_NAME} v${APP_VERSION} initialized successfully`);
+    } catch (e) {
+        console.error('Error during initialization:', e);
+        // Ensure loader is hidden even if there's an error
+        const loader = document.getElementById('loader');
+        if (loader) {
+            loader.style.opacity = '0';
+            loader.style.transition = 'opacity 0.5s ease';
+            setTimeout(() => {
+                loader.style.display = 'none';
+            }, 500);
+        }
+    }
 });
